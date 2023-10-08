@@ -1,0 +1,3 @@
+[submodule "SimViewer"]
+	path = SimViewer
+	url = https://github.com/Univstar/SimViewer.git
