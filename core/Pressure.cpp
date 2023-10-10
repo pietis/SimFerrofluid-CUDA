@@ -1,6 +1,6 @@
 #include "Pressure.h"
 
-#include "BiLerp.h"
+#include "TriLerp.h"
 
 #include <amgcl/backend/eigen.hpp>
 #include <amgcl/make_solver.hpp>
@@ -33,11 +33,11 @@ namespace Pivot {
 		std::vector<Triplet<double>> elements;
 
 		for (int r = 0; r < m_RdP.size(); r++) {
-			Vector2i const cell = levelSet.GetGrid().CoordOf(m_Mat2Grid[r]);
+			Vector3i const cell = levelSet.GetGrid().CoordOf(m_Mat2Grid[r]);
 			double diagCoeff = 0;
 			double div = 0;
 			for (int i = 0; i < Grid::GetNumNeighbors(); i++) {
-				Vector2i const nbCell = Grid::NeighborOf(cell, i);
+				Vector3i const nbCell = Grid::NeighborOf(cell, i);
 				auto const [axis, face] = StaggeredGrid::FaceOfCell(cell, i);
 				int const side = StaggeredGrid::FaceSideOfCell(i);
 				double const weight = 1 - collider.GetFraction()[axis][face];
@@ -73,7 +73,7 @@ namespace Pivot {
 
 		int n = 0;
 
-		ForEach(levelSet.GetGrid(), [&](Vector2i const &cell) {
+		ForEach(levelSet.GetGrid(), [&](Vector3i const &cell) {
 			if (levelSet[cell] <= 0) {
 				m_Grid2Mat[cell] = n++;
 				m_Mat2Grid.push_back(levelSet.GetGrid().IndexOf(cell));
@@ -103,9 +103,9 @@ namespace Pivot {
 		SGridData<double>       &velocity,
 		GridData<double>  const &levelSet,
 		Collider          const &collider) {
-		ParallelForEach(velocity.GetGrids(), [&](int axis, Vector2i const &face) {
-			Vector2i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
-			Vector2i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
+		ParallelForEach(velocity.GetGrids(), [&](int axis, Vector3i const &face) {
+			Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
+			Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
 			double const weight = 1. - collider.GetFraction()[axis][face];
 			if (weight == 0.) return;
 

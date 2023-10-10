@@ -26,9 +26,9 @@ namespace Pivot {
 		auto       &GetData()       { return m_Data; }
 		auto const &GetData() const { return m_Data; }
 
-		Type       &operator[](Vector2i const &coord)       { return m_Data[m_Grid.IndexOf(coord)]; }
-		Type const &operator[](Vector2i const &coord) const { return m_Data[m_Grid.IndexOf(coord)]; }
-		Type const &At        (Vector2i const &coord) const { return m_Data[m_Grid.IndexOf(m_Grid.Clamp(coord))]; }
+		Type       &operator[](Vector3i const &coord)       { return m_Data[m_Grid.IndexOf(coord)]; }
+		Type const &operator[](Vector3i const &coord) const { return m_Data[m_Grid.IndexOf(coord)]; }
+		Type const &At        (Vector3i const &coord) const { return m_Data[m_Grid.IndexOf(m_Grid.Clamp(coord))]; }
 		Type       &operator[](int index)       { return m_Data[index]; }
 		Type const &operator[](int index) const { return m_Data[index]; }
 

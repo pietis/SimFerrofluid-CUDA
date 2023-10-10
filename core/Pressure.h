@@ -13,7 +13,7 @@ namespace Pivot {
 			Collider          const &collider);
 		
 		template <typename Func>
-			requires (std::is_convertible_v<Func, std::function<double(int, Vector2i const &, double)>>)
+			requires (std::is_convertible_v<Func, std::function<double(int, Vector3i const &, double)>>)
 		void SetPressureJump(Func &&pressureJump) { m_PressureJump = pressureJump; }
 
 	private:
@@ -42,6 +42,6 @@ namespace Pivot {
 		VectorXd m_Rhs;
 
 		// Pressure jump: p_liquid - p_air
-		std::function<double(int, Vector2i const &, double)> m_PressureJump = nullptr;
+		std::function<double(int, Vector3i const &, double)> m_PressureJump = nullptr;
 	};
 }

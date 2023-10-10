@@ -6,9 +6,9 @@ namespace Pivot {
 	class FiniteDiff {
 	public:
 		template <typename Type>
-		static Type CalcFirstDrv(GridData<Type> const &grData, Vector2i const &coord, int axis) {
+		static Type CalcFirstDrv(GridData<Type> const &grData, Vector3i const &coord, int axis) {
 			double const invDx = grData.GetGrid().GetInvSpacing();
-			auto const f = [&](int i)->Type { return grData[coord + Vector2i::Unit(axis) * i]; };
+			auto const f = [&](int i)->Type { return grData[coord + Vector3i::Unit(axis) * i]; };
 			if (coord[axis] == 0) {
 				return CalcFirstForward(f(0), f(+1), f(+2)) * invDx * .5;
 			} else if (coord[axis] + 1 == grData.GetGrid().GetSize()[axis]) {
@@ -19,10 +19,10 @@ namespace Pivot {
 		}
 
 		template <typename Type>
-		static Type CalcSecondDrv(GridData<Type> const &grData, Vector2i const &coord, int axis1, int axis2) {
+		static Type CalcSecondDrv(GridData<Type> const &grData, Vector3i const &coord, int axis1, int axis2) {
 			double const invDx = grData.GetGrid().GetInvSpacing();
 			// if (axis1 == axis2) {
-			// 	auto const f = [&](int i)->Type { return grData[coord + Vector2i::Unit(axis1) * i]; };
+			// 	auto const f = [&](int i)->Type { return grData[coord + Vector3i::Unit(axis1) * i]; };
 			// 	if (coord[axis1] == 0) {
 			// 		return CalcSecondForward(f(0), f(+1), f(+2), f(+3)) * invDx * invDx;
 			// 	} else if (coord[axis1] + 1 == grData.GetGrid().GetSize()[axis1]) {
@@ -31,7 +31,7 @@ namespace Pivot {
 			// 		return CalcSecondCentral(f(-2), f(0), f(+2)) * invDx * invDx * .5 * .5;
 			// 	}
 			// } 
-			auto const f = [&](int i)->Type { return CalcFirstDrv(grData, coord + Vector2i::Unit(axis1) * i, axis2); };
+			auto const f = [&](int i)->Type { return CalcFirstDrv(grData, coord + Vector3i::Unit(axis1) * i, axis2); };
 			if (coord[axis1] == 0) {
 				return CalcFirstForward(f(0), f(+1), f(+2)) * invDx * .5;
 			} else if (coord[axis1] + 1 == grData.GetGrid().GetSize()[axis1]) {
@@ -41,7 +41,7 @@ namespace Pivot {
 			}
 		}
 
-		static double CalcCurvature(GridData<double> const &grData, Vector2i const &coord);
+		static double CalcCurvature(GridData<double> const &grData, Vector3i const &coord);
 	
 	private:
 		template <typename Type> static Type CalcFirstCentral (Type const &f0, Type const &f2)                 { return f2 - f0; }

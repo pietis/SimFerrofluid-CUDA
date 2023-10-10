@@ -19,10 +19,10 @@ namespace Pivot {
 		constexpr double length = 1.;
 		constexpr int bw = 2;
 		int const scale = options.Scale < 0 ? 128 : options.Scale;
-		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector2i(1, 1) * scale);
+		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
-		CSG::Union(sim->m_LevelSet, ImplicitPlane (-Vector2d::Unit(1) * length * .15, Vector2d::Unit(1)));
-		CSG::Union(sim->m_LevelSet, ImplicitSphere( Vector2d::Unit(1) * length * .05, length * .1));
+		CSG::Union(sim->m_LevelSet, ImplicitPlane (-Vector3d::Unit(1) * length * .15, Vector3d::Unit(1)));
+		CSG::Union(sim->m_LevelSet, ImplicitSphere( Vector3d::Unit(1) * length * .05, length * .1));
 		return sim;
 	}
 
@@ -30,9 +30,9 @@ namespace Pivot {
 		constexpr double length = 1.;
 		constexpr int bw = 2;
 		int const scale = options.Scale < 0 ? 128 : options.Scale;
-		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector2i(1, 1) * scale);
+		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
-		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector2d::Zero(), length * .25));
+		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector3d::Zero(), length * .25));
 		return sim;
 	}
 
@@ -40,10 +40,10 @@ namespace Pivot {
 		constexpr double length = 1.;
 		constexpr int bw = 2;
 		int const scale = options.Scale < 0 ? 128 : options.Scale;
-		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector2i(1, 1) * scale);
+		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
-		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector2d::Zero(), length * .25));
-		CSG::Union(sim->m_Collider.LevelSet, ImplicitPlane(Vector2d(-2, -1) * length * .25, Vector2d(1, 4).normalized()));
+		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector3d::Zero(), length * .25));
+		CSG::Union(sim->m_Collider.LevelSet, ImplicitPlane(Vector3d(-2, -1, 0) * length * .25, Vector3d(1, 4, 0).normalized()));
 		return sim;
 	}
 
@@ -51,11 +51,11 @@ namespace Pivot {
 		constexpr double length = .1;
 		constexpr int bw = 2;
 		int const scale = options.Scale < 0 ? 128 : options.Scale;
-		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector2i(1, 1) * scale);
+		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
 		sim->m_GravityEnabled        = false;
 		sim->m_SurfaceTensionEnabled = true;
-		CSG::Union(sim->m_LevelSet, ImplicitEllipsoid(Vector2d::Zero(), Vector2d(.4, .25) * length));
+		CSG::Union(sim->m_LevelSet, ImplicitEllipsoid(Vector3d::Zero(), Vector3d(.4, .25, .25) * length));
 		return sim;
 	}
 }

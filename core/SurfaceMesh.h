@@ -7,8 +7,8 @@ namespace Pivot {
 	public:
 		SurfaceMesh() = default;
 
-		virtual Vector2d ClosestNormalOf (Vector2d const &pos) const override { return Vector2d::Zero(); } // FIXME
-		virtual double   SignedDistanceTo(Vector2d const &pos) const override { return 0; } // FIXME
+		virtual Vector3d ClosestNormalOf (Vector3d const &pos) const override { return Vector3d::Zero(); } // FIXME
+		virtual double   SignedDistanceTo(Vector3d const &pos) const override { return 0; } // FIXME
 
 		std::vector<double> const &GetAreas         () const { return m_Areas; }
 		std::vector<double> const &GetMeanCurvatures() const { return m_MeanCurvatures; }
@@ -16,12 +16,13 @@ namespace Pivot {
 		void Clear();
 		void Export(std::ostream &out) const;
 
+		void ComputeNormals();
 		void ComputeAreas();
 		void ComputeMeanCurvatures();
 
 	public:
-		std::vector<Vector2d>      Positions;
-		std::vector<Vector2d>      Normals;
+		std::vector<Vector3d>      Positions;
+		std::vector<Vector3d>      Normals;
 		std::vector<std::uint32_t> Indices;
 	
 	private:

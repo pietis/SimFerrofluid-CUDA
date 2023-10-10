@@ -4,12 +4,12 @@ namespace Pivot {
 	void Extrapolation::Solve(GridData<double> &grData, double clearVal, int maxSteps, GridData<std::uint8_t> &valid) {
 		auto valid1 = valid;
 		for (int iter = 0; iter < maxSteps; iter++) {
-			ParallelForEach(grData.GetGrid(), [&](Vector2i const &coord) {
+			ParallelForEach(grData.GetGrid(), [&](Vector3i const &coord) {
 				if (!valid[coord]) {
 					int    cnt = 0;
 					double sum = 0;
 					for (int i = 0; i < Grid::GetNumNeighbors(); i++) {
-						Vector2i const nbCoord = Grid::NeighborOf(coord, i);
+						Vector3i const nbCoord = Grid::NeighborOf(coord, i);
 						if (grData.GetGrid().IsValid(nbCoord) && valid[nbCoord]) {
 							sum += grData[nbCoord];
 							cnt++;

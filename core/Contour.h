@@ -13,15 +13,15 @@ namespace Pivot {
 		void Generate(GridData<double> const &grData, double value = 0.);
 		void ComputeVertexInfos();
 
-		int  VertexIndexOf(int axis, Vector2i const &edge) { return m_EdgeMark[axis][edge]; }
+		int  VertexIndexOf(int axis, Vector3i const &edge) { return m_EdgeMark[axis][edge]; }
 
 	private:
 		#include "MarchingCubesTables.inc"
 
 		Grid                         const &m_NodeGrid;
 		Grid                                m_CellGrid;
-		std::array<Grid, 2>                 m_EdgeGrids;
-		std::array<GridData<int>, 2>        m_EdgeMark;
+		std::array<Grid, 3>                 m_EdgeGrids;
+		std::array<GridData<int>, 3>        m_EdgeMark;
 
 		SurfaceMesh                         m_Mesh;
 	};

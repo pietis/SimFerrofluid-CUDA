@@ -12,7 +12,7 @@ namespace Pivot {
 		static void Solve(GridData<double> &phi, int maxSteps);
 	
 	private:
-		static void   UpdateNeighbors     (Vector2i const &coord, GridData<std::int8_t> const &visited, GridData<double>       &tent, Heap &heap);
-		static double SolveEikonalEquation(Vector2i const &coord, GridData<std::int8_t> const &visited, GridData<double> const &tent);
+		static void   UpdateNeighbors     (Vector3i const &coord, GridData<std::int8_t> const &visited, GridData<double>       &tent, Heap &heap);
+		static double SolveEikonalEquation(Vector3i const &coord, GridData<std::int8_t> const &visited, GridData<double> const &tent);
 	};
 }
