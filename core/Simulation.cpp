@@ -19,7 +19,7 @@ namespace Pivot {
 
 	void Simulation::Describe(YAML::Node &root) const {
 		root["Dimension"] = 3;
-		root["Radius"] = m_SGrid.GetDomainRadius();
+		root["Radius"] = m_SGrid.GetDomainRadius() * 2;
 		{ // Description of contour
 			YAML::Node node;
 			node["Name"] = "contour";
@@ -30,13 +30,14 @@ namespace Pivot {
 			node["Material"]["Albedo"] = Vector4f(0, 0, 1, 1);
 			root["Objects"].push_back(node);
 		}
-		// { // Description of collider
-		// 	YAML::Node node;
-		// 	node["Name"] = "collider";
-		// 	node["Primitive"] = "Points";
-		// 	node["Material"]["Albedo"] = Vector4f(.5f, .5f, .5f, 1);
-		// 	root["Objects"].push_back(node);
-		// }
+		{ // Description of collider
+			YAML::Node node;
+			node["Name"] = "collider";
+			node["Primitive"] = "Points";
+			node["Shader"] = "points";
+			node["Material"]["Albedo"] = Vector4f(.5f, .5f, .5f, 1);
+			root["Objects"].push_back(node);
+		}
 	}
 
 	void Simulation::Export(std::filesystem::path const &dirname, bool initial) const {
@@ -44,19 +45,25 @@ namespace Pivot {
 			std::ofstream fout(dirname / "contour.out", std::ios::binary);
 			m_Contour.GetMesh().Export(fout);
 		}
-		// if (initial) { // Export the collider
-		// 	std::ofstream fout(dirname / "collider.out", std::ios::binary);
-		// 	std::uint32_t cnt = 0;
-		// 	ForEach(m_LevelSet.GetGrid(), [&](Vector3i const &cell) {
-		// 		if (m_Collider.IsInside(cell)) cnt++;
-		// 	});
-		// 	IO::Write(fout, cnt);
-		// 	ForEach(m_LevelSet.GetGrid(), [&](Vector3i const &cell) {
-		// 		if (!m_Collider.IsInside(cell)) return;
-		// 		Vector3d const pos = m_LevelSet.GetGrid().PositionOf(cell);
-		// 		IO::Write(fout, pos.cast<float>().eval());
-		// 	});
-		// }
+		if (initial) { // Export the collider
+			std::ofstream fout(dirname / "collider.out", std::ios::binary);
+			std::uint32_t cnt = 0;
+			ForEach(m_LevelSet.GetGrid(), [&](Vector3i const &cell) {
+				if (m_SGrid.IsInsideCell(cell) && m_Collider.IsInside(cell)) cnt++;
+			});
+			IO::Write(fout, cnt);
+			ForEach(m_LevelSet.GetGrid(), [&](Vector3i const &cell) {
+				if (m_SGrid.IsBoundaryCell(cell) || !m_Collider.IsInside(cell)) return;
+				Vector3d const pos = m_LevelSet.GetGrid().PositionOf(cell);
+				IO::Write(fout, pos.cast<float>().eval());
+			});
+			ForEach(m_LevelSet.GetGrid(), [&](Vector3i const &cell) {
+				if (m_SGrid.IsBoundaryCell(cell) || !m_Collider.IsInside(cell)) return;
+				Vector3d const pos = m_LevelSet.GetGrid().PositionOf(cell);
+				Vector3d const n = TriLerp::Interpolate(m_Collider.GetNormal(), pos).normalized();
+				IO::Write(fout, n.cast<float>().eval());
+			});
+		}
 	}
 
 	void Simulation::Save(std::ostream &out) const {

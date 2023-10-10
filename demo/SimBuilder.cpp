@@ -18,7 +18,7 @@ namespace Pivot {
 	std::unique_ptr<Simulation> SimBuilder::BuildFalling(SimBuildOptions const &options) {
 		constexpr double length = 1.;
 		constexpr int bw = 2;
-		int const scale = options.Scale < 0 ? 128 : options.Scale;
+		int const scale = options.Scale < 0 ? 64 : options.Scale;
 		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
 		CSG::Union(sim->m_LevelSet, ImplicitPlane (-Vector3d::Unit(1) * length * .15, Vector3d::Unit(1)));
@@ -29,20 +29,20 @@ namespace Pivot {
 	std::unique_ptr<Simulation> SimBuilder::BuildBigBall(SimBuildOptions const &options) {
 		constexpr double length = 1.;
 		constexpr int bw = 2;
-		int const scale = options.Scale < 0 ? 128 : options.Scale;
+		int const scale = options.Scale < 0 ? 64 : options.Scale;
 		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
-		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector3d::Zero(), length * .25));
+		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector3d::Zero(), length * .33));
 		return sim;
 	}
 
 	std::unique_ptr<Simulation> SimBuilder::BuildSlope(SimBuildOptions const &options) {
 		constexpr double length = 1.;
 		constexpr int bw = 2;
-		int const scale = options.Scale < 0 ? 128 : options.Scale;
+		int const scale = options.Scale < 0 ? 64 : options.Scale;
 		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
-		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector3d::Zero(), length * .25));
+		CSG::Union(sim->m_LevelSet, ImplicitSphere(Vector3d::Zero(), length * .33));
 		CSG::Union(sim->m_Collider.LevelSet, ImplicitPlane(Vector3d(-2, -1, 0) * length * .25, Vector3d(1, 4, 0).normalized()));
 		return sim;
 	}
@@ -50,7 +50,7 @@ namespace Pivot {
 	std::unique_ptr<Simulation> SimBuilder::BuildDroplet(SimBuildOptions const &options) {
 		constexpr double length = .1;
 		constexpr int bw = 2;
-		int const scale = options.Scale < 0 ? 128 : options.Scale;
+		int const scale = options.Scale < 0 ? 64 : options.Scale;
 		StaggeredGrid sgrid(2, length / (scale - bw * 2), Vector3i(1, 1, 1) * scale);
 		auto sim = std::make_unique<Simulation>(sgrid);
 		sim->m_GravityEnabled        = false;
