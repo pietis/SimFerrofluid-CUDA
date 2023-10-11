@@ -34,7 +34,6 @@ namespace Pivot {
 			YAML::Node node;
 			node["Name"] = "collider";
 			node["Primitive"] = "Points";
-			node["Shader"] = "points";
 			node["Material"]["Albedo"] = Vector4f(.5f, .5f, .5f, 1);
 			root["Objects"].push_back(node);
 		}
