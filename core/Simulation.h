@@ -10,7 +10,7 @@ namespace Pivot {
 		friend class SimBuilder;
 	
 	public:
-		enum class Scene { Falling, BigBall, Slope, Droplet };
+		enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak };
 
 	public:
 		explicit Simulation(StaggeredGrid const &sgrid);

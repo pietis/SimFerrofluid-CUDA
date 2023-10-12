@@ -6,10 +6,11 @@
 Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
 	using namespace Pivot;
 	static std::unordered_map<std::string, Simulation::Scene> const s_SceneFromName = {
-		{ "falling", Simulation::Scene::Falling },
-		{ "bigball", Simulation::Scene::BigBall },
-		{ "slope"  , Simulation::Scene::Slope   },
-		{ "droplet", Simulation::Scene::Droplet },
+		{ "falling" , Simulation::Scene::Falling  },
+		{ "bigball" , Simulation::Scene::BigBall  },
+		{ "slope"   , Simulation::Scene::Slope    },
+		{ "droplet" , Simulation::Scene::Droplet  },
+		{ "dambreak", Simulation::Scene::DamBreak },
 	};
 	if (auto iter = s_SceneFromName.find(name.data()); iter != s_SceneFromName.end()) {
 		return iter->second;
