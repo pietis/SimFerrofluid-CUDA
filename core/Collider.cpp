@@ -46,7 +46,7 @@ namespace Pivot {
 	double Collider::CalcFaceFraction(int axis, Vector3i const &face) const {
 		constexpr auto theta = [](double phi0, double phi1) { return phi0 / (phi0 - phi1); };
 
-		constexpr auto fraction = [](double phi0, double phi1, double phi2) {
+		constexpr auto fraction = [&theta](double phi0, double phi1, double phi2) {
 			if (phi0 > phi1) std::swap(phi0, phi1);
 			if (phi1 > phi2) std::swap(phi1, phi2);
 			if (phi0 > phi1) std::swap(phi0, phi1);
