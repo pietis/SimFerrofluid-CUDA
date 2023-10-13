@@ -25,6 +25,7 @@ namespace Pivot {
 
 		void AdvectFields(double dt);
 		void ApplyBodyForces(double dt);
+		void ApplySurfacePressure(double dt);
 		void ProjectVelocity(double dt);
 
 		void ReinitializeLevelSet();

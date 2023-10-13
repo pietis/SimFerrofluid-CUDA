@@ -10,8 +10,7 @@ namespace Pivot {
 		virtual Vector3d ClosestNormalOf (Vector3d const &pos) const override { return Vector3d::Zero(); } // FIXME
 		virtual double   SignedDistanceTo(Vector3d const &pos) const override { return 0; } // FIXME
 
-		std::vector<double> const &GetAreas         () const { return m_Areas; }
-		std::vector<double> const &GetMeanCurvatures() const { return m_MeanCurvatures; }
+		int size() { return Positions.size(); }
 
 		void Clear();
 		void Export(std::ostream &out) const;
@@ -25,8 +24,8 @@ namespace Pivot {
 		std::vector<Vector3d>      Normals;
 		std::vector<std::uint32_t> Indices;
 	
-	private:
-		std::vector<double>        m_Areas;
-		std::vector<double>        m_MeanCurvatures;
+		std::vector<double>        Areas;
+		double TotalArea;
+		std::vector<double>        MeanCurvatures;
 	};
 }
