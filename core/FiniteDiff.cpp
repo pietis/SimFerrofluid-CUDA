@@ -18,6 +18,7 @@ namespace Pivot {
 		kappa /= gradNorm2 * std::sqrt(gradNorm2);
 		double const invDx = grData.GetGrid().GetInvSpacing();
 
-		return std::abs(kappa) < invDx ? kappa: (kappa < 0 ? -1 : +1) * invDx;
+		// return std::abs(kappa) < invDx ? kappa: (kappa < 0 ? -1 : +1) * invDx;
+		return kappa;
 	}
 }

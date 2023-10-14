@@ -56,7 +56,10 @@ void SurfaceMesh::ComputeAreas() {
         auto const v0 = (Positions[i2] - Positions[i1]).normalized();
         auto const v1 = (Positions[i0] - Positions[i2]).normalized();
         auto const v2 = (Positions[i1] - Positions[i0]).normalized();
-        double fa = v0.cross(v1).norm();
+        double fa = (Positions[i1] - Positions[i0])
+                        .cross(Positions[i2] - Positions[i0])
+                        .norm() /
+                    2;
         TotalArea += fa;
         double const a0 = std::acos(-v1.dot(v2)) / std::numbers::pi;
         double const a1 = std::acos(-v0.dot(v2)) / std::numbers::pi;

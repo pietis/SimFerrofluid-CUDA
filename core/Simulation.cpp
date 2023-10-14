@@ -102,6 +102,9 @@ void Simulation::ApplyBodyForces(double dt) {
 }
 
 void Simulation::ApplySurfacePressure(double dt) {
+    if (m_MagneticEnabled) {
+        m_Magnetic.Solve(m_Contour.GetMesh());
+    }
     if (m_SurfaceTensionEnabled) {
         m_Pressure.SetPressureJump([&](int axis, Vector3i const &face,
                                        double theta) -> double {
@@ -114,6 +117,10 @@ void Simulation::ApplySurfacePressure(double dt) {
                 if (m_SurfaceTensionEnabled) {
                     double kappa = m_Contour.GetMesh().MeanCurvatures[index];
                     pressure += kappa * m_SurfaceTensionCoeff /
+                                m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+                }
+                if (m_MagneticEnabled) {
+                    pressure += m_Magnetic.m_MagneticPressure[index] /
                                 m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
                 }
                 return pressure;
