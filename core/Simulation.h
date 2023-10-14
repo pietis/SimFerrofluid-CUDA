@@ -2,54 +2,64 @@
 
 #include "Collider.h"
 #include "Contour.h"
+#include "Magnetic.h"
 #include "Pressure.h"
 
 namespace Pivot {
-	class Simulation {
-	private:
-		friend class SimBuilder;
-	
-	public:
-		enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak, Plane };
+class Simulation {
+  private:
+    friend class SimBuilder;
 
-	public:
-		explicit Simulation(StaggeredGrid const &sgrid);
+  public:
+    enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak, Plane };
 
-		void Describe(YAML::Node &root) const;
-		void Export(std::filesystem::path const &dirname, bool initial = false) const;
-		void Save(std::ostream &out) const;
-		void Load(std::istream &in);
+  public:
+    explicit Simulation(StaggeredGrid const &sgrid);
 
-		void Initialize();
-		void Advance(double deltaTime);
+    void Describe(YAML::Node &root) const;
+    void Export(std::filesystem::path const &dirname,
+                bool initial = false) const;
+    void Save(std::ostream &out) const;
+    void Load(std::istream &in);
 
-		void AdvectFields(double dt);
-		void ApplyBodyForces(double dt);
-		void ApplySurfacePressure(double dt);
-		void ProjectVelocity(double dt);
+    void Initialize();
+    void Advance(double deltaTime);
 
-		void ReinitializeLevelSet();
+    void AdvectFields(double dt);
+    void ApplyBodyForces(double dt);
+    void ApplySurfacePressure(double dt);
+    void ProjectVelocity(double dt);
 
-		void SetTime(double time) { m_Time = time; }
-		auto GetTime() const { return m_Time; }
+    void ReinitializeLevelSet(bool initial = false);
 
-		double GetCourantTimeStep() const { return m_SGrid.GetSpacing() / m_Velocity.GetMaxAbsComponent(); }
-	
-	private:
-		double m_Time;
-		Scene  m_Scene;
+    void SetTime(double time) { m_Time = time; }
+    auto GetTime() const { return m_Time; }
 
-		StaggeredGrid          m_SGrid;
-		Collider               m_Collider;
-		Pressure               m_Pressure;
-		SGridData<double>      m_Velocity;
-		GridData<double>       m_LevelSet;
-		Contour                m_Contour;
+    double GetCourantTimeStep() const {
+        return m_SGrid.GetSpacing() / m_Velocity.GetMaxAbsComponent();
+    }
 
-		double m_LiquidDensity       = 1e3;
-		double m_SurfaceTensionCoeff = 7.28e-2;
+  private:
+    double m_Time;
+    Scene m_Scene;
 
-		bool m_GravityEnabled        = true;
-		bool m_SurfaceTensionEnabled = false;
-	};
-}
+    StaggeredGrid m_SGrid;
+    Collider m_Collider;
+    Pressure m_Pressure;
+    SGridData<double> m_Velocity;
+    GridData<double> m_LevelSet;
+    Contour m_Contour;
+    Magnetic m_Magnetic;
+
+    double m_InitVolume;
+    double m_CurrentVolume;
+    double m_CumulVolError = 0;
+
+    double m_LiquidDensity = 1e3;
+    double m_SurfaceTensionCoeff = 7.28e-2;
+
+    bool m_GravityEnabled = true;
+    bool m_SurfaceTensionEnabled = false;
+    bool m_MagneticEnabled = false;
+};
+} // namespace Pivot

@@ -1,3 +1,6 @@
 [submodule "SimViewer"]
 	path = SimViewer
 	url = https://github.com/Univstar/SimViewer.git
+[submodule "MC-style-vol-eval"]
+	path = MC-style-vol-eval
+	url = https://github.com/tetsuya-takahashi/MC-style-vol-eval.git

@@ -4,6 +4,8 @@
 
 #include "FiniteDiff.h"
 
+#include "fraction.hpp"
+
 namespace Pivot {
 static inline std::uint8_t GetCellType(GridData<double> const &grData,
                                        Vector3i const &cell, double value) {
@@ -124,6 +126,26 @@ void Contour::ComputeVertexInfosFromLS(GridData<double> const &levelSet) {
             }
         }
     });
+};
+
+void Contour::ComputeVolumeFromLS(GridData<double> const &levelSet) {
+    double vol = 0;
+    ForEach(m_CellGrid, [&](Vector3i const &cell) {
+        std::array<double, 8> phi3d{
+            levelSet.At(cell + Vector3i(0, 0, 0)),
+            levelSet.At(cell + Vector3i(1, 0, 0)),
+            levelSet.At(cell + Vector3i(1, 1, 0)),
+            levelSet.At(cell + Vector3i(0, 1, 0)),
+            levelSet.At(cell + Vector3i(0, 0, 1)),
+            levelSet.At(cell + Vector3i(1, 0, 1)),
+            levelSet.At(cell + Vector3i(1, 1, 1)),
+            levelSet.At(cell + Vector3i(0, 1, 1)),
+        };
+        vol += Fraction::get_mc_vol(phi3d);
+    });
+    m_Mesh.TotalVolume = vol * levelSet.GetGrid().GetSpacing() *
+                         levelSet.GetGrid().GetSpacing() *
+                         levelSet.GetGrid().GetSpacing();
 };
 
 } // namespace Pivot

@@ -25,7 +25,8 @@ namespace Pivot {
 		std::vector<std::uint32_t> Indices;
 	
 		std::vector<double>        Areas;
-		double TotalArea;
 		std::vector<double>        MeanCurvatures;
+		double TotalArea;
+		double TotalVolume;
 	};
 }

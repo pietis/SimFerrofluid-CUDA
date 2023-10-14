@@ -76,7 +76,7 @@ void Simulation::Initialize() {
     m_Collider.Finish(m_SGrid);
     CSG::Intersect(m_LevelSet, m_Collider.GetDomainBox());
 
-    ReinitializeLevelSet();
+    ReinitializeLevelSet(true);
 }
 
 void Simulation::Advance(double deltaTime) {
@@ -130,7 +130,14 @@ void Simulation::ApplySurfacePressure(double dt) {
 }
 
 void Simulation::ProjectVelocity(double dt) {
-    m_Pressure.Project(m_Velocity, m_LevelSet, m_Collider);
+    double x = (m_CurrentVolume - m_InitVolume) / (m_InitVolume);
+    m_CumulVolError += x * dt;
+    double kp = 0.1 / dt;
+    double ki = kp * kp / 16;
+    double c = 1 / (x + 1) * (-kp * x - ki * m_CumulVolError);
+
+    m_Pressure.Project(m_Velocity, m_LevelSet, m_Collider,
+                       c * m_SGrid.GetSpacing());
     Extrapolation::Solve(
         m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
             Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
@@ -141,7 +148,7 @@ void Simulation::ProjectVelocity(double dt) {
     m_Collider.Enforce(m_Velocity);
 }
 
-void Simulation::ReinitializeLevelSet() {
+void Simulation::ReinitializeLevelSet(bool initial) {
     Extrapolation::Solve(
         m_LevelSet, 1.5 * m_SGrid.GetSpacing(), 1,
         [&](Vector3i const &cell) { return !m_Collider.IsInside(cell); });
@@ -152,5 +159,12 @@ void Simulation::ReinitializeLevelSet() {
     m_Contour.Generate(opLevelSet);
     // m_Contour.ComputeVertexInfos();
     m_Contour.ComputeVertexInfosFromLS(opLevelSet);
+    m_Contour.ComputeVolumeFromLS(opLevelSet);
+
+    m_CurrentVolume = m_Contour.GetMesh().TotalVolume;
+    if (initial) {
+        m_InitVolume = m_CurrentVolume;
+    }
+    fmt::print("volume {:.3e}/{:.3e} ", m_CurrentVolume, m_InitVolume);
 }
 } // namespace Pivot

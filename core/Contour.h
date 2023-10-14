@@ -14,6 +14,7 @@ class Contour {
     void Generate(GridData<double> const &grData, double value = 0.);
     void ComputeVertexInfos();
     void ComputeVertexInfosFromLS(GridData<double> const &levelSet);
+    void ComputeVolumeFromLS(GridData<double> const &levelSet);
 
     int VertexIndexOf(int axis, Vector3i const &edge) {
         return m_EdgeMark[axis][edge];

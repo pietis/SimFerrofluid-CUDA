@@ -24,6 +24,7 @@ target("demo")
     add_packages("yaml-cpp")
 
     add_includedirs("core")
+    add_includedirs("MC-style-vol-eval")
     add_headerfiles("core/**.h")
     add_files("core/**.cpp")
     add_headerfiles("demo/**.h")
