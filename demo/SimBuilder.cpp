@@ -24,10 +24,10 @@ namespace Pivot {
 		auto sim = std::make_unique<Simulation>(sgrid);
 		CSG::Union(sim->m_LevelSet, ImplicitPlane (-Vector3d::Unit(1) * length * .15, Vector3d::Unit(1)));
 		CSG::Union(sim->m_LevelSet, ImplicitSphere( Vector3d::Unit(1) * length * .05, length * .1));
-		double const vel = -10 * length;
+		double const vel = -5 * length;
 		ParallelForEach(sim->m_Velocity[1].GetGrid(), [&](Vector3i const &face) {
 			Vector3d const pos = sim->m_Velocity[1].GetGrid().PositionOf(face);
-			if (pos.y() > 0.) {
+			if (pos.y() + length * .1 > 0.) {
 				sim->m_Velocity[1][face] = vel;
 			}
 		});
