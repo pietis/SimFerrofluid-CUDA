@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Collider.h"
+#include "StopWatch.h"
+
+#include "MagneticCUDA.h"
 
 namespace Pivot {
 class Magnetic {
@@ -11,13 +14,20 @@ class Magnetic {
     void Solve(SurfaceMesh &mesh) {
         m_Mesh = &mesh;
 
+        fmt::print("meshsize {} ", mesh.size());
+        auto sw = StopWatch("mag.");
         InitSolver();
-        SolveMagneticByFPI();
+        // SolveMagnetic();
+        SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
+                          m_Mesh->Areas.data(), &m_Hext,
+                          m_MagneticPressure.data(), m_Mesh->size(),
+                          m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
+        fmt::print("{:>8.3f}s ", sw.Stop());
     }
 
   private:
-    void InitSolver() { m_MagneticPressure.resize(m_Mesh->size(), 0); }
-    void SolveMagneticByFPI() {
+    void InitSolver() { m_MagneticPressure.resize(m_Mesh->size()); }
+    void SolveMagnetic() {
         static std::vector<double> buffer[2];
         int size = m_Mesh->size();
         buffer[0].resize(size);
@@ -25,7 +35,6 @@ class Magnetic {
         int u, utmp;
         u = 0;
         utmp = 1;
-        fmt::print("size {} ", size);
 #pragma omp parallel shared(u)
         {
 #pragma omp for
@@ -39,16 +48,16 @@ class Magnetic {
                 for (int i = 0; i < size; i++) {
                     buffer[u][i] =
                         -2 * m_Lambda * m_Hext.dot(m_Mesh->Normals[i]);
+                    double sum = 0;
                     for (int j = 0; j < size; j++) {
                         if (i == j) {
                             continue;
                         }
-                        buffer[u][i] +=
-                            2 * m_Lambda *
-                            dGdxd(m_Mesh->Positions[i], m_Mesh->Positions[j],
-                                  m_Mesh->Normals[i], m_EpsFPI) *
-                            m_Mesh->Areas[j] * buffer[utmp][j];
+                        sum += dGdxd(m_Mesh->Positions[i], m_Mesh->Positions[j],
+                                     m_Mesh->Normals[i], m_EpsFPI) *
+                               m_Mesh->Areas[j] * buffer[utmp][j];
                     }
+                    buffer[u][i] += 2 * m_Lambda * sum;
                 }
 #pragma omp barrier
             }
