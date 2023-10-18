@@ -3,44 +3,55 @@
 #include "Collider.h"
 
 namespace Pivot {
-class Pressure {
-  public:
-    explicit Pressure(StaggeredGrid const &sgrid);
+	class Pressure {
+	public:
+		explicit Pressure(StaggeredGrid const &sgrid);
 
-    void Project(SGridData<double> &velocity, GridData<double> const &levelSet,
-                 Collider const &collider, double volError = 0);
+		void Project(
+			SGridData<double>       &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
 
-    template <typename Func>
-        requires(std::is_convertible_v<
-                 Func, std::function<double(int, Vector3i const &, double)>>)
-    void SetPressureJump(Func &&pressureJump) {
-        m_PressureJump = pressureJump;
-    }
+		void Reproject(
+			SGridData<double>       &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
 
-  private:
-    void BuildProjectionMatrix(SGridData<double> const &velocity,
-                               GridData<double> const &levelSet,
-                               Collider const &collider, double volError);
+		template <typename Func>
+			requires (std::is_convertible_v<Func, std::function<double(int, Vector3i const &, double)>>)
+		void SetPressureJump(Func &&pressureJump) { m_PressureJump = pressureJump; }
 
-    void SetUnKnowns(GridData<double> const &levelSet);
+	private:
+		void BuildProjectionMatrix(
+			SGridData<double> const &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
+		
+		void SetRightHandSide(
+			SGridData<double> const &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
 
-    void SolveLinearSystem();
+		void SetUnKnowns(
+			GridData<double>  const &levelSet);
 
-    void ApplyProjection(SGridData<double> &velocity,
-                         GridData<double> const &levelSet,
-                         Collider const &collider);
+		void SolveLinearSystem();
 
-  private:
-    GridData<int> m_Grid2Mat;
-    std::vector<int> m_Mat2Grid;
+		void ApplyProjection(
+			SGridData<double>       &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
 
-    SparseMatrix<double, RowMajor> m_MatL; // A matrix of the Laplacian operator
+	private:
+		GridData<int>    m_Grid2Mat;
+		std::vector<int> m_Mat2Grid;
 
-    VectorXd m_RdP; // reduced pressure
-    VectorXd m_Rhs;
+		SparseMatrix<double, RowMajor> m_MatL; // A matrix of the Laplacian operator
 
-    // Pressure jump: p_liquid - p_air
-    std::function<double(int, Vector3i const &, double)> m_PressureJump =
-        nullptr;
-};
-} // namespace Pivot
+		VectorXd m_RdP;  // reduced pressure
+		VectorXd m_Rhs;
+
+		// Pressure jump: p_liquid - p_air
+		std::function<double(int, Vector3i const &, double)> m_PressureJump = nullptr;
+	};
+}

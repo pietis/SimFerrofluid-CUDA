@@ -27,10 +27,11 @@ class Simulation {
 
     void AdvectFields(double dt);
     void ApplyBodyForces(double dt);
-    void ApplySurfacePressure(double dt);
     void ProjectVelocity(double dt);
+    void ApplySemiImplicitST(double dt);
 
     void ReinitializeLevelSet(bool initial = false);
+
 
     void SetTime(double time) { m_Time = time; }
     auto GetTime() const { return m_Time; }
@@ -60,6 +61,7 @@ class Simulation {
 
     bool m_GravityEnabled = true;
     bool m_SurfaceTensionEnabled = false;
+    bool m_SemiImplicitSTEnabled = false;
     bool m_MagneticEnabled = false;
 };
 } // namespace Pivot

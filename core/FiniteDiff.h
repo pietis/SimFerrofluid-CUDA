@@ -30,18 +30,21 @@ namespace Pivot {
 				} else {
 					return CalcSecondCentral(f(-1), f(0), f(+1)) * invDx * invDx;
 				}
-			} 
-			auto const f = [&](int i)->Type { return CalcFirstDrv(grData, coord + Vector3i::Unit(axis1) * i, axis2); };
-			if (coord[axis1] == 0) {
-				return CalcFirstForward(f(0), f(+1), f(+2)) * invDx * .5;
-			} else if (coord[axis1] + 1 == grData.GetGrid().GetSize()[axis1]) {
-				return CalcFirstBackward(f(-2), f(-1), f(0)) * invDx * .5;
 			} else {
-				return CalcFirstCentral(f(-1), f(+1)) * invDx * .5;
+				auto const f = [&](int i)->Type { return CalcFirstDrv(grData, coord + Vector3i::Unit(axis1) * i, axis2); };
+				if (coord[axis1] == 0) {
+					return CalcFirstForward(f(0), f(+1), f(+2)) * invDx * .5;
+				} else if (coord[axis1] + 1 == grData.GetGrid().GetSize()[axis1]) {
+					return CalcFirstBackward(f(-2), f(-1), f(0)) * invDx * .5;
+				} else {
+					return CalcFirstCentral(f(-1), f(+1)) * invDx * .5;
+				}
 			}
 		}
 
-		static double CalcCurvature(GridData<double> const &grData, Vector3i const &coord);
+		static Vector3d CalcGradient (GridData<double> const &grData, Vector3i const &coord);
+		static Matrix3d CalcHessian  (GridData<double> const &grData, Vector3i const &coord);
+		static double   CalcCurvature(GridData<double> const &grData, Vector3i const &coord);
 	
 	private:
 		template <typename Type> static Type CalcFirstCentral (Type const &f0, Type const &f2)                 { return f2 - f0; }
