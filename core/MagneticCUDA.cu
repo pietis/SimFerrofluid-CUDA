@@ -75,56 +75,24 @@ magnetic_iter(double *__restrict__ u, const double *__restrict__ utmp,
               const double eps, const int size) {
     int iidx = blockIdx.y * blockDim.y + threadIdx.y;
     int jidx = blockIdx.x * blockDim.x + threadIdx.x;
-    int iidx_ = blockIdx.y * blockDim.y + threadIdx.x;
     int tx = threadIdx.x;
     int ty = threadIdx.y;
-    __shared__ double ipositions[BLOCK_SIZE * 3];
-    __shared__ double jpositions[BLOCK_SIZE * 3];
-    __shared__ double inormals[BLOCK_SIZE * 3];
-    __shared__ double jareas[BLOCK_SIZE];
-    __shared__ double jutmp[BLOCK_SIZE];
     __shared__ double sdata[BLOCK_SIZE * BLOCK_SIZE];
 
     sdata[tx + ty * BLOCK_SIZE] = 0;
-    if (ty == 0 && jidx < size) {
-        jpositions[tx * 3 + 0] = positions[jidx * 3 + 0];
-        jpositions[tx * 3 + 1] = positions[jidx * 3 + 1];
-        jpositions[tx * 3 + 2] = positions[jidx * 3 + 2];
-    }
-
-    if (ty == 1 && jidx < size) {
-        jareas[tx] = areas[jidx];
-    }
-
-    if (ty == 2 && jidx < size) {
-        jutmp[tx] = utmp[jidx];
-    }
-
-    if (ty == 3 && iidx_ < size) {
-        ipositions[tx * 3 + 0] = positions[iidx_ * 3 + 0];
-        ipositions[tx * 3 + 1] = positions[iidx_ * 3 + 1];
-        ipositions[tx * 3 + 2] = positions[iidx_ * 3 + 2];
-    }
-
-    if (ty == 4 && iidx_ < size) {
-        inormals[tx * 3 + 0] = normals[iidx_ * 3 + 0];
-        inormals[tx * 3 + 1] = normals[iidx_ * 3 + 1];
-        inormals[tx * 3 + 2] = normals[iidx_ * 3 + 2];
-    }
-    __syncthreads();
     if (jidx < size && iidx < size && iidx != jidx) {
         double r[3];
-        r[0] = jpositions[tx * 3 + 0] - ipositions[ty * 3 + 0];
-        r[1] = jpositions[tx * 3 + 1] - ipositions[ty * 3 + 1];
-        r[2] = jpositions[tx * 3 + 2] - ipositions[ty * 3 + 2];
-        double rd = r[0] * inormals[ty * 3 + 0] + r[1] * inormals[ty * 3 + 1] +
-                    r[2] * inormals[ty * 3 + 2];
+        r[0] = positions[jidx * 3 + 0] - positions[iidx * 3 + 0];
+        r[1] = positions[jidx * 3 + 1] - positions[iidx * 3 + 1];
+        r[2] = positions[jidx * 3 + 2] - positions[iidx * 3 + 2];
+        double rd = r[0] * normals[iidx * 3 + 0] +
+                    r[1] * normals[iidx * 3 + 1] + r[2] * normals[iidx * 3 + 2];
         double rs = norm3d(r[0], r[1], r[2]);
         rs = rs * rs * rs;
         rs = max(rs, eps);
         const double C = 1.0 / (4.0 * 3.141592653589783);
         double dG = C * rd / rs;
-        sdata[tx + ty * BLOCK_SIZE] = dG * jareas[tx] * jutmp[tx];
+        sdata[tx + ty * BLOCK_SIZE] = dG * areas[jidx] * utmp[jidx];
     }
     __syncthreads();
     if (tx < 16) {
