@@ -17,10 +17,10 @@ namespace Pivot {
 	void Pressure::Project(
 		SGridData<double>       &velocity,
 		GridData<double>  const &levelSet,
-		Collider          const &collider) {
+		Collider          const &collider, double volError) {
 		SetUnKnowns(levelSet);
 		if (m_Mat2Grid.empty()) return;
-		BuildProjectionMatrix(velocity, levelSet, collider);
+		BuildProjectionMatrix(velocity, levelSet, collider, volError);
 		SolveLinearSystem();
 		ApplyProjection(velocity, levelSet, collider);
 	}
@@ -28,9 +28,9 @@ namespace Pivot {
 	void Pressure::Reproject(
 		SGridData<double>       &velocity,
 		GridData<double>  const &levelSet,
-		Collider          const &collider) {
+		Collider          const &collider, double volError) {
 		if (m_Mat2Grid.empty()) return;
-		SetRightHandSide(velocity, levelSet, collider);
+		SetRightHandSide(velocity, levelSet, collider, volError);
 		SolveLinearSystem();
 		ApplyProjection(velocity, levelSet, collider);
 	}
@@ -38,7 +38,7 @@ namespace Pivot {
 	void Pressure::BuildProjectionMatrix(
 		SGridData<double> const &velocity,
 		GridData<double>  const &levelSet,
-		Collider          const &collider) {
+		Collider          const &collider, double volError) {
 
 		std::vector<Triplet<double>> elements;
 
@@ -69,6 +69,7 @@ namespace Pivot {
 					div -= side * (1 - weight) * collider.Velocity[axis][face];
 				}
 			}
+			div += volError;
 			m_Rhs[r] = div;
 			elements.push_back(Triplet<double>(r, r, diagCoeff ? diagCoeff : 1.));
 		}
@@ -79,7 +80,7 @@ namespace Pivot {
 	void Pressure::SetRightHandSide(
 		SGridData<double> const &velocity,
 		GridData<double>  const &levelSet,
-		Collider          const &collider) {
+		Collider          const &collider, double volError) {
 		for (int r = 0; r < m_RdP.size(); r++) {
 			Vector3i const cell = levelSet.GetGrid().CoordOf(m_Mat2Grid[r]);
 			double div = 0;
@@ -95,6 +96,7 @@ namespace Pivot {
 					div -= side * (1 - weight) * collider.Velocity[axis][face];
 				}
 			}
+			div += volError;
 			m_Rhs[r] = div;
 		}
 	}

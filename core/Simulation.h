@@ -29,6 +29,7 @@ class Simulation {
     void ApplyBodyForces(double dt);
     void ProjectVelocity(double dt);
     void ApplySemiImplicitST(double dt);
+    void ComputeVolumeError(double dt);
 
     void ReinitializeLevelSet(bool initial = false);
 
@@ -55,6 +56,7 @@ class Simulation {
     double m_InitVolume;
     double m_CurrentVolume;
     double m_CumulVolError = 0;
+    double m_VolError = 0;
 
     double m_LiquidDensity = 1e3;
     double m_SurfaceTensionCoeff = 7.28e-2;

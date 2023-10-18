@@ -76,7 +76,7 @@ namespace Pivot {
 		m_Collider.Finish(m_SGrid);
 		CSG::Intersect(m_LevelSet, m_Collider.GetDomainBox());
 		
-		ReinitializeLevelSet();
+		ReinitializeLevelSet(true);
 	}
 
 	void Simulation::Advance(double deltaTime) {
@@ -93,6 +93,7 @@ namespace Pivot {
 		Advection::Solve<2>(m_Velocity, m_Velocity, dt);
 
 		ReinitializeLevelSet();
+		ComputeVolumeError(dt);
 	}
 
 	void Simulation::ApplyBodyForces(double dt) {
@@ -101,6 +102,14 @@ namespace Pivot {
 				m_Velocity[1][face] -= 9.8 * dt;
 			});
 		}
+	}
+
+	void Simulation::ComputeVolumeError(double dt) {
+		double x = (m_CurrentVolume - m_InitVolume) / (m_InitVolume);
+		m_CumulVolError += x * dt;
+		double kp = 0.1 / dt;
+		double ki = kp * kp / 16;
+		m_VolError = 1 / (x + 1) * (-kp * x - ki * m_CumulVolError) * m_SGrid.GetSpacing();
 	}
 
 	void Simulation::ProjectVelocity(double dt) {
@@ -114,7 +123,7 @@ namespace Pivot {
 				return kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
 			});
 		}
-		m_Pressure.Project(m_Velocity, m_LevelSet, m_Collider);
+		m_Pressure.Project(m_Velocity, m_LevelSet, m_Collider, m_SemiImplicitSTEnabled ? 0 : m_VolError);
 		Extrapolation::Solve(m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
 			Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
 			Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
@@ -125,7 +134,7 @@ namespace Pivot {
 
 	void Simulation::ApplySemiImplicitST(double dt) {
 		SISurfaceTension::Solve(m_Velocity, m_LevelSet, m_Collider, m_SurfaceTensionCoeff / m_LiquidDensity, dt);
-		m_Pressure.Reproject(m_Velocity, m_LevelSet, m_Collider);
+		m_Pressure.Reproject(m_Velocity, m_LevelSet, m_Collider, m_VolError);
 		Extrapolation::Solve(m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
 			Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
 			Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
@@ -143,6 +152,15 @@ namespace Pivot {
 		auto opLevelSet = m_LevelSet;
 		CSG::Except(opLevelSet, m_Collider.GetAuxLevelSet());
 		m_Contour.Generate(opLevelSet);
-		m_Contour.ComputeVertexInfos();
+		// m_Contour.ComputeVertexInfos();
+
+		m_Contour.ComputeVertexInfosFromLS(opLevelSet);
+		m_Contour.ComputeVolumeFromLS(opLevelSet);
+
+		m_CurrentVolume = m_Contour.GetMesh().TotalVolume;
+		if (initial) {
+			m_InitVolume = m_CurrentVolume;
+		}
+		fmt::print("volume {:.3e}/{:.3e} ", m_CurrentVolume, m_InitVolume);
 	}
 }

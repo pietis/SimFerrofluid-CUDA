@@ -10,12 +10,12 @@ namespace Pivot {
 		void Project(
 			SGridData<double>       &velocity,
 			GridData<double>  const &levelSet,
-			Collider          const &collider);
+			Collider          const &collider, double volError = 0);
 
 		void Reproject(
 			SGridData<double>       &velocity,
 			GridData<double>  const &levelSet,
-			Collider          const &collider);
+			Collider          const &collider, double volError = 0);
 
 		template <typename Func>
 			requires (std::is_convertible_v<Func, std::function<double(int, Vector3i const &, double)>>)
@@ -25,12 +25,12 @@ namespace Pivot {
 		void BuildProjectionMatrix(
 			SGridData<double> const &velocity,
 			GridData<double>  const &levelSet,
-			Collider          const &collider);
+			Collider          const &collider, double volError);
 		
 		void SetRightHandSide(
 			SGridData<double> const &velocity,
 			GridData<double>  const &levelSet,
-			Collider          const &collider);
+			Collider          const &collider, double volError);
 
 		void SetUnKnowns(
 			GridData<double>  const &levelSet);
