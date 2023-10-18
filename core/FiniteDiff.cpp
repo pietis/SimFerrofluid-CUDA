@@ -1,6 +1,21 @@
 #include "FiniteDiff.h"
 
 namespace Pivot {
+	Vector3d FiniteDiff::CalcGradient(GridData<double> const &grData, Vector3i const &coord) {
+		return {
+			CalcFirstDrv(grData, coord, 0), CalcFirstDrv(grData, coord, 1), CalcFirstDrv(grData, coord, 2)
+		};
+	}
+
+	Matrix3d FiniteDiff::CalcHessian(GridData<double> const &grData, Vector3i const &coord) {
+		Matrix3d hessian;
+		hessian << 
+			CalcSecondDrv(grData, coord, 0, 0), CalcSecondDrv(grData, coord, 0, 1), CalcSecondDrv(grData, coord, 0, 2),
+			CalcSecondDrv(grData, coord, 1, 0), CalcSecondDrv(grData, coord, 1, 1), CalcSecondDrv(grData, coord, 1, 2),
+			CalcSecondDrv(grData, coord, 2, 0), CalcSecondDrv(grData, coord, 2, 1), CalcSecondDrv(grData, coord, 2, 2);
+		return hessian;
+	}
+
 	double FiniteDiff::CalcCurvature(GridData<double> const &grData, Vector3i const &coord) {
 		double const phi_x = CalcFirstDrv(grData, coord, 0);
 		double const phi_y = CalcFirstDrv(grData, coord, 1);

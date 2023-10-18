@@ -25,6 +25,16 @@ namespace Pivot {
 		ApplyProjection(velocity, levelSet, collider);
 	}
 
+	void Pressure::Reproject(
+		SGridData<double>       &velocity,
+		GridData<double>  const &levelSet,
+		Collider          const &collider) {
+		if (m_Mat2Grid.empty()) return;
+		SetRightHandSide(velocity, levelSet, collider);
+		SolveLinearSystem();
+		ApplyProjection(velocity, levelSet, collider);
+	}
+
 	void Pressure::BuildProjectionMatrix(
 		SGridData<double> const &velocity,
 		GridData<double>  const &levelSet,
@@ -64,6 +74,29 @@ namespace Pivot {
 		}
 
 		m_MatL.setFromTriplets(elements.begin(), elements.end());
+	}
+
+	void Pressure::SetRightHandSide(
+		SGridData<double> const &velocity,
+		GridData<double>  const &levelSet,
+		Collider          const &collider) {
+		for (int r = 0; r < m_RdP.size(); r++) {
+			Vector3i const cell = levelSet.GetGrid().CoordOf(m_Mat2Grid[r]);
+			double div = 0;
+			for (int i = 0; i < Grid::GetNumNeighbors(); i++) {
+				Vector3i const nbCell = Grid::NeighborOf(cell, i);
+				auto const [axis, face] = StaggeredGrid::FaceOfCell(cell, i);
+				int const side = StaggeredGrid::FaceSideOfCell(i);
+				double const weight = 1 - collider.GetFraction()[axis][face];
+				if (weight > 0) {
+					div -= side * weight * velocity[axis][face];
+				}
+				if (weight < 1) {
+					div -= side * (1 - weight) * collider.Velocity[axis][face];
+				}
+			}
+			m_Rhs[r] = div;
+		}
 	}
 
 	void Pressure::SetUnKnowns(

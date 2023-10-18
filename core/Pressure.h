@@ -11,13 +11,23 @@ namespace Pivot {
 			SGridData<double>       &velocity,
 			GridData<double>  const &levelSet,
 			Collider          const &collider);
-		
+
+		void Reproject(
+			SGridData<double>       &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
+
 		template <typename Func>
 			requires (std::is_convertible_v<Func, std::function<double(int, Vector3i const &, double)>>)
 		void SetPressureJump(Func &&pressureJump) { m_PressureJump = pressureJump; }
 
 	private:
 		void BuildProjectionMatrix(
+			SGridData<double> const &velocity,
+			GridData<double>  const &levelSet,
+			Collider          const &collider);
+		
+		void SetRightHandSide(
 			SGridData<double> const &velocity,
 			GridData<double>  const &levelSet,
 			Collider          const &collider);

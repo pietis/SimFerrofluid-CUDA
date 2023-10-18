@@ -26,6 +26,7 @@ namespace Pivot {
 		void AdvectFields(double dt);
 		void ApplyBodyForces(double dt);
 		void ProjectVelocity(double dt);
+		void ApplySemiImplicitST(double dt);
 
 		void ReinitializeLevelSet();
 
@@ -50,5 +51,6 @@ namespace Pivot {
 
 		bool m_GravityEnabled        = true;
 		bool m_SurfaceTensionEnabled = false;
+		bool m_SemiImplicitSTEnabled = false;
 	};
 }

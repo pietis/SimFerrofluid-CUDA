@@ -5,6 +5,7 @@
 #include "Extrapolation.h"
 #include "FiniteDiff.h"
 #include "Reinitialization.h"
+#include "SISurfaceTension.h"
 #include "TriLerp.h"
 
 namespace Pivot {
@@ -82,6 +83,9 @@ namespace Pivot {
 		AdvectFields(deltaTime);
 		ApplyBodyForces(deltaTime);
 		ProjectVelocity(deltaTime);
+		if (m_SurfaceTensionEnabled && m_SemiImplicitSTEnabled) {
+			ApplySemiImplicitST(deltaTime);
+		}
 	}
 
 	void Simulation::AdvectFields(double dt) {
@@ -100,7 +104,7 @@ namespace Pivot {
 	}
 
 	void Simulation::ProjectVelocity(double dt) {
-		if (m_SurfaceTensionEnabled) {
+		if (m_SurfaceTensionEnabled && !m_SemiImplicitSTEnabled) {
 			m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
 				Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
 				Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
@@ -111,6 +115,17 @@ namespace Pivot {
 			});
 		}
 		m_Pressure.Project(m_Velocity, m_LevelSet, m_Collider);
+		Extrapolation::Solve(m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
+			Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
+			Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
+			return m_Collider.GetFraction()[axis][face] < 1 && (m_LevelSet[cell0] <= 0 || m_LevelSet[cell1] <= 0);
+		});
+		m_Collider.Enforce(m_Velocity);
+	}
+
+	void Simulation::ApplySemiImplicitST(double dt) {
+		SISurfaceTension::Solve(m_Velocity, m_LevelSet, m_Collider, m_SurfaceTensionCoeff / m_LiquidDensity, dt);
+		m_Pressure.Reproject(m_Velocity, m_LevelSet, m_Collider);
 		Extrapolation::Solve(m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
 			Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
 			Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
