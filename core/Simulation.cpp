@@ -113,16 +113,29 @@ namespace Pivot {
 	}
 
 	void Simulation::ProjectVelocity(double dt) {
-		if (m_SurfaceTensionEnabled && !m_SemiImplicitSTEnabled) {
-			m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
+		if(m_MagneticEnabled){
+			m_Magnetic.Solve(m_Contour.GetMesh());
+		}
+		m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
+			double pressure = 0;
+			if (m_SurfaceTensionEnabled && !m_SemiImplicitSTEnabled) {
 				Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
 				Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
 				double const kappa0 = FiniteDiff::CalcCurvature(m_LevelSet, cell0);
 				double const kappa1 = FiniteDiff::CalcCurvature(m_LevelSet, cell1);
 				double const kappa = (1 - theta) * kappa0 + theta * kappa1;
-				return kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
-			});
-		}
+				pressure += kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+			}
+			if (m_MagneticEnabled) {
+				int index =
+					m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
+				if(index > 0){
+					pressure += m_Magnetic.m_MagneticPressure[index] /
+								m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+				}
+			}
+			return pressure;
+		});
 		m_Pressure.Project(m_Velocity, m_LevelSet, m_Collider, m_SemiImplicitSTEnabled ? 0 : m_VolError);
 		Extrapolation::Solve(m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
 			Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
