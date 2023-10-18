@@ -146,6 +146,9 @@ namespace Pivot {
 	}
 
 	void Simulation::ApplySemiImplicitST(double dt) {
+		m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
+			return 0;
+		});
 		SISurfaceTension::Solve(m_Velocity, m_LevelSet, m_Collider, m_SurfaceTensionCoeff / m_LiquidDensity, dt);
 		m_Pressure.Reproject(m_Velocity, m_LevelSet, m_Collider, m_VolError);
 		Extrapolation::Solve(m_Velocity, 0., 6, [&](int axis, Vector3i const &face) {
