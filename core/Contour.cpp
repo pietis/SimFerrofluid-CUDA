@@ -143,9 +143,9 @@ void Contour::ComputeVolumeFromLS(GridData<double> const &levelSet) {
         };
         vol += Fraction::get_mc_vol(phi3d);
     });
-    m_Mesh.TotalVolume = vol * levelSet.GetGrid().GetSpacing() *
+    m_Mesh.TotalVolume = vol/* * levelSet.GetGrid().GetSpacing() *
                          levelSet.GetGrid().GetSpacing() *
-                         levelSet.GetGrid().GetSpacing();
+                         levelSet.GetGrid().GetSpacing()*/;
 };
 
 } // namespace Pivot

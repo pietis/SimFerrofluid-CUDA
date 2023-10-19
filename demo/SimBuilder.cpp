@@ -130,11 +130,10 @@ SimBuilder::BuildPlane(SimBuildOptions const &options) {
                         Vector3i(4, 3, 4) * scale / 4);
     auto sim = std::make_unique<Simulation>(sgrid);
     sim->m_SurfaceTensionEnabled = true;
-    sim->m_SemiImplicitSTEnabled = true;
     sim->m_MagneticEnabled = true;
     CSG::Union(sim->m_LevelSet,
                ImplicitPlane(sgrid.GetDomainOrigin() +
-                                 Vector3d::Unit(1) * length * .15,
+                                 Vector3d::Unit(1) * length * .25,
                              Vector3d::Unit(1)));
     return sim;
 }

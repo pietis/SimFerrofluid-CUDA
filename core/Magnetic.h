@@ -17,11 +17,11 @@ class Magnetic {
         fmt::print("meshsize {} ", mesh.size());
         auto sw = StopWatch("mag.");
         InitSolver();
-        // SolveMagnetic();
-        SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
-                          m_Mesh->Areas.data(), &m_Hext,
-                          m_MagneticPressure.data(), m_Mesh->size(),
-                          m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
+        SolveMagnetic();
+        // SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
+        //                   m_Mesh->Areas.data(), &m_Hext,
+        //                   m_MagneticPressure.data(), m_Mesh->size(),
+        //                   m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
         fmt::print("{:>8.3f}s ", sw.Stop());
     }
 

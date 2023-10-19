@@ -61,12 +61,12 @@ void SurfaceMesh::ComputeAreas() {
                         .norm() /
                     2;
         TotalArea += fa;
-        double const a0 = std::acos(-v1.dot(v2)) / std::numbers::pi;
-        double const a1 = std::acos(-v0.dot(v2)) / std::numbers::pi;
-        double const a2 = 1 - a0 - a1;
-        Areas[i0] += fa * a0;
-        Areas[i1] += fa * a1;
-        Areas[i2] += fa * a2;
+        // double const a0 = std::acos(-v1.dot(v2)) / std::numbers::pi;
+        // double const a1 = std::acos(-v0.dot(v2)) / std::numbers::pi;
+        // double const a2 = 1 - a0 - a1;
+        Areas[i0] += fa / 3;
+        Areas[i1] += fa / 3;
+        Areas[i2] += fa / 3;
     }
 }
 

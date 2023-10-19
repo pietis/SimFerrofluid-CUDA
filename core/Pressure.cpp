@@ -69,7 +69,7 @@ namespace Pivot {
 					div -= side * (1 - weight) * collider.Velocity[axis][face];
 				}
 			}
-			div += volError;
+			div += volError / m_RdP.size();
 			m_Rhs[r] = div;
 			elements.push_back(Triplet<double>(r, r, diagCoeff ? diagCoeff : 1.));
 		}
@@ -96,7 +96,7 @@ namespace Pivot {
 					div -= side * (1 - weight) * collider.Velocity[axis][face];
 				}
 			}
-			div += volError;
+			div += volError / m_RdP.size();
 			m_Rhs[r] = div;
 		}
 	}
