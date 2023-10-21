@@ -5,6 +5,8 @@
 
 #include "MagneticCUDA.h"
 
+#include "omp.h"
+
 namespace Pivot {
 class Magnetic {
   private:
@@ -17,11 +19,11 @@ class Magnetic {
         fmt::print("meshsize {} ", mesh.size());
         auto sw = StopWatch("mag.");
         InitSolver();
-        SolveMagnetic();
-        // SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
-        //                   m_Mesh->Areas.data(), &m_Hext,
-        //                   m_MagneticPressure.data(), m_Mesh->size(),
-        //                   m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
+        // SolveMagnetic();
+        SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
+                          m_Mesh->Areas.data(), &m_Hext,
+                          m_MagneticPressure.data(), m_Mesh->size(),
+                          m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
         fmt::print("{:>8.3f}s ", sw.Stop());
     }
 
@@ -35,7 +37,8 @@ class Magnetic {
         int u, utmp;
         u = 0;
         utmp = 1;
-#pragma omp parallel shared(u)
+        double sum_res = 0;
+#pragma omp parallel shared(sum_res)
         {
 #pragma omp for
             for (int i = 0; i < size; i++) {
@@ -61,10 +64,16 @@ class Magnetic {
                 }
 #pragma omp barrier
             }
+#pragma omp for reduction(+ : sum_res)
+            for (int i = 0; i < size; i++) {
+                sum_res += abs(buffer[u][i] - buffer[utmp][i]);
+            }
+            if (omp_get_thread_num() == 0) {
+                fmt::print("residual {:.3e} ", sum_res / size);
+            }
 #pragma omp for
             for (int i = 0; i < size; i++) {
-                double w = m_MU * (1 + m_Chi) / (-m_Chi) * buffer[u][i];
-                double Hn = -w / (m_MU * (1 + m_Chi));
+                double Hn = 1 / (m_Chi)*buffer[u][i];
                 double Hn_ = Hn * (1 + m_Chi);
 
                 Vector3d nx = m_Mesh->Normals[i];
@@ -106,7 +115,7 @@ class Magnetic {
     }
 
   private:
-    inline static const double m_PI = 3.141592653589783;
+    inline static const double m_PI = 3.141592653589793;
     inline static const double m_MU = 4e-7 * m_PI;
 
     SurfaceMesh *m_Mesh;
@@ -114,9 +123,10 @@ class Magnetic {
 
     double m_Chi = 0.33;
     double m_Lambda = (-m_Chi) / (2 + m_Chi);
-    Vector3d m_Hext = Vector3d(0, 6e4, 0);
+    Vector3d m_Hext = Vector3d(0, 5e4, 0);
 
-    int m_NumIteration = 12;
+    int m_NumIteration = 15;
+    // double m_EpsFPI = 5e-9;
     double m_EpsFPI = 1e-8;
     double m_StopThres = 1e-6;
 };

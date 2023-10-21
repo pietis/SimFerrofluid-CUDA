@@ -105,12 +105,11 @@ namespace Pivot {
 	}
 
 	void Simulation::ComputeVolumeError(double dt) {
-		double x = m_CurrentVolume - m_InitVolume;
-		// m_CumulVolError += x * dt;
-		// double kp = 0.1 / dt;
-		// double ki = kp * kp / 16;
-		// m_VolError = 1 / (x + 1) * (-kp * x - ki * m_CumulVolError) * m_SGrid.GetSpacing();
-		m_VolError = -x / dt * m_SGrid.GetSpacing();
+		double x = (m_CurrentVolume - m_InitVolume) / (m_InitVolume);
+		m_CumulVolError += x * dt;
+		double kp = 0.05 / dt;
+		double ki = kp * kp / 16;
+		m_VolError = 1 / (x + 1) * (-kp * x - ki * m_CumulVolError) * m_SGrid.GetSpacing();
 	}
 
 	void Simulation::ProjectVelocity(double dt) {
@@ -161,9 +160,9 @@ namespace Pivot {
 	}
 
 	void Simulation::ReinitializeLevelSet(bool initial) {
-		// Extrapolation::Solve(m_LevelSet, 1.5 * m_SGrid.GetSpacing(), 1, [&](Vector3i const &cell) {
-		// 	return !m_Collider.IsInside(cell);
-		// });
+		Extrapolation::Solve(m_LevelSet, 1.5 * m_SGrid.GetSpacing(), 1, [&](Vector3i const &cell) {
+			return !m_Collider.IsInside(cell);
+		});
 		CSG::Except(m_LevelSet, m_Collider.GetAuxLevelSet());
 		Reinitialization::Solve(m_LevelSet, 5);
 

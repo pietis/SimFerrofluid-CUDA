@@ -42,9 +42,9 @@ __global__ void init_b(double *__restrict__ u, double *__restrict__ b,
                        const int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        double Hnext = Hext[0] * normals[idx * 3 + 0] +
-                       Hext[1] * normals[idx * 3 + 1] +
-                       Hext[2] * normals[idx * 3 + 2];
+        double3 normals_ = ((double3 *)normals)[idx];
+        double Hnext =
+            Hext[0] * normals_.x + Hext[1] * normals_.y + Hext[2] * normals_.z;
         u[idx] = -2 * lambda * Hnext;
         b[idx] = -2 * lambda * Hnext;
     }
@@ -58,7 +58,16 @@ __global__ void init_u(double *__restrict__ u, double *__restrict__ b,
     }
 }
 
-__device__ void warp_reduce(volatile double *s_data, int idx) {
+__device__ void warp_reduce32(volatile double *s_data, int idx) {
+    s_data[idx] += s_data[idx + 16];
+    s_data[idx] += s_data[idx + 8];
+    s_data[idx] += s_data[idx + 4];
+    s_data[idx] += s_data[idx + 2];
+    s_data[idx] += s_data[idx + 1];
+}
+
+__device__ void warp_reduce64(volatile double *s_data, int idx) {
+    s_data[idx] += s_data[idx + 32];
     s_data[idx] += s_data[idx + 16];
     s_data[idx] += s_data[idx + 8];
     s_data[idx] += s_data[idx + 4];
@@ -78,70 +87,112 @@ magnetic_iter(double *__restrict__ u, const double *__restrict__ utmp,
     int tx = threadIdx.x;
     int ty = threadIdx.y;
     __shared__ double sdata[BLOCK_SIZE * BLOCK_SIZE];
-
     sdata[tx + ty * BLOCK_SIZE] = 0;
     if (jidx < size && iidx < size && iidx != jidx) {
-        double r[3];
-        r[0] = positions[jidx * 3 + 0] - positions[iidx * 3 + 0];
-        r[1] = positions[jidx * 3 + 1] - positions[iidx * 3 + 1];
-        r[2] = positions[jidx * 3 + 2] - positions[iidx * 3 + 2];
-        double rd = r[0] * normals[iidx * 3 + 0] +
-                    r[1] * normals[iidx * 3 + 1] + r[2] * normals[iidx * 3 + 2];
-        double rs = norm3d(r[0], r[1], r[2]);
-        rs = rs * rs * rs;
-        rs = max(rs, eps);
-        const double C = 1.0 / (4.0 * 3.141592653589783);
-        double dG = C * rd / rs;
+        double3 pi;
+        double3 pj;
+        double3 ni;
+        double3 r;
+        pi = ((double3 *)positions)[iidx];
+        pj = ((double3 *)positions)[jidx];
+        ni = ((double3 *)normals)[iidx];
+        r.x = pj.x - pi.x;
+        r.y = pj.y - pi.y;
+        r.z = pj.z - pi.z;
+        double rd = r.x * ni.x + r.y * ni.y + r.z * ni.z;
+        double rs = r.x * r.x + r.y * r.y + r.z * r.z;
+        rs = (1 / rs) * rsqrt(rs);
+        rs = min(rs, 1 / eps);
+        // rs = (rs > 1 / eps) ? 0 : rs;
+        constexpr double C = 1.0 / (4.0 * 3.141592653589793);
+        double dG = C * rd * rs;
         sdata[tx + ty * BLOCK_SIZE] = dG * areas[jidx] * utmp[jidx];
     }
     __syncthreads();
     if (tx < 16) {
-        warp_reduce(sdata + ty * BLOCK_SIZE, tx);
+        warp_reduce32(sdata + ty * BLOCK_SIZE, tx);
     }
-    __syncthreads();
     if (tx == 0 && iidx < size) {
         atomicAdd(u + iidx, 2 * lambda * sdata[ty * BLOCK_SIZE]);
     }
 }
 
+__global__ void compute_residual(double *sum, const double *__restrict__ utmp,
+                                 const double *__restrict__ u, const int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int tx = threadIdx.x;
+    __shared__ double sdata[1024];
+    sdata[tx] = 0;
+    if (idx < size) {
+        double dif = abs(u[idx] - utmp[idx]);
+        sdata[tx] = dif;
+    }
+    __syncthreads();
+    if (tx < 512) {
+        sdata[tx] += (tx + 512 < size) ? sdata[tx + 512] : 0;
+    }
+    __syncthreads();
+    if (tx < 256) {
+        sdata[tx] += (tx + 256 < size) ? sdata[tx + 256] : 0;
+    }
+    __syncthreads();
+    if (tx < 128) {
+        sdata[tx] += (tx + 128 < size) ? sdata[tx + 128] : 0;
+    }
+    __syncthreads();
+    if (tx < 64) {
+        sdata[tx] += (tx + 64 < size) ? sdata[tx + 64] : 0;
+    }
+    __syncthreads();
+    if (tx < 32) {
+        warp_reduce64(sdata, tx);
+    }
+    if (tx == 0) {
+        atomicAdd(sum, sdata[0]);
+    }
+}
+
 __global__ void init_Ht(double *__restrict__ Ht1, double *__restrict__ Ht2,
+                        double *__restrict__ tangential1,
+                        double *__restrict__ tangential2,
                         const double *__restrict__ Hext,
                         const double *__restrict__ normals, const int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    double itx1[3];
-    double itx2[3];
+    double3 itx1;
+    double3 itx2;
     if (idx < size) {
-        double normals_[3];
-        normals_[0] = normals[idx * 3 + 0];
-        normals_[1] = normals[idx * 3 + 1];
-        normals_[2] = normals[idx * 3 + 2];
+        double3 normals_;
+        normals_ = ((double3 *)normals)[idx];
 
         double x, y, z, rn;
-        if (abs(normals_[0]) > 0.1) {
-            x = -normals_[2];
+        if (abs(normals_.x) > 0.5) {
+            x = -normals_.z;
             y = 0;
-            z = normals_[0];
+            z = normals_.x;
         } else {
             x = 0;
-            y = normals_[2];
-            z = -normals_[1];
+            y = normals_.z;
+            z = -normals_.y;
         }
         rn = rnorm3d(x, y, z);
-        itx1[0] = x * rn;
-        itx1[1] = y * rn;
-        itx1[2] = z * rn;
+        itx1.x = x * rn;
+        itx1.y = y * rn;
+        itx1.z = z * rn;
 
-        x = normals_[1] * itx1[2] - normals_[2] * itx1[1];
-        y = normals_[2] * itx1[0] - normals_[0] * itx1[2];
-        z = normals_[0] * itx1[1] - normals_[1] * itx1[0];
+        x = normals_.y * itx1.z - normals_.z * itx1.y;
+        y = normals_.z * itx1.x - normals_.x * itx1.z;
+        z = normals_.x * itx1.y - normals_.y * itx1.x;
 
         rn = rnorm3d(x, y, z);
-        itx2[0] = x * rn;
-        itx2[1] = y * rn;
-        itx2[2] = z * rn;
+        itx2.x = x * rn;
+        itx2.y = y * rn;
+        itx2.z = z * rn;
 
-        Ht1[idx] = Hext[0] * itx1[0] + Hext[1] * itx1[1] + Hext[2] * itx1[2];
-        Ht2[idx] = Hext[0] * itx2[0] + Hext[1] * itx2[1] + Hext[2] * itx2[2];
+        Ht1[idx] = Hext[0] * itx1.x + Hext[1] * itx1.y + Hext[2] * itx1.z;
+        Ht2[idx] = Hext[0] * itx2.x + Hext[1] * itx2.y + Hext[2] * itx2.z;
+
+        ((double3 *)tangential1)[idx] = itx1;
+        ((double3 *)tangential2)[idx] = itx2;
     }
 }
 
@@ -149,102 +200,53 @@ template <int BLOCK_SIZE>
 __global__ void
 compute_Ht(double *__restrict__ Ht1, double *__restrict__ Ht2,
            const double *__restrict__ u, const double *__restrict__ positions,
-           const double *__restrict__ normals, const double *__restrict__ areas,
-           const double eps, const int size) {
+           const double *__restrict__ normals,
+           const double *__restrict__ tangential1,
+           const double *__restrict__ tangential2,
+           const double *__restrict__ areas, const double eps, const int size) {
     int iidx = blockIdx.y * blockDim.y + threadIdx.y;
     int jidx = blockIdx.x * blockDim.x + threadIdx.x;
-    int iidx_ = blockIdx.y * blockDim.y + threadIdx.x;
     int tx = threadIdx.x;
     int ty = threadIdx.y;
 
-    __shared__ double ipositions[BLOCK_SIZE * 3];
-    __shared__ double jpositions[BLOCK_SIZE * 3];
-    __shared__ double itx1[BLOCK_SIZE * 3];
-    __shared__ double itx2[BLOCK_SIZE * 3];
-    __shared__ double jareas[BLOCK_SIZE];
-    __shared__ double ju[BLOCK_SIZE];
     __shared__ double sdata1[BLOCK_SIZE * BLOCK_SIZE];
     __shared__ double sdata2[BLOCK_SIZE * BLOCK_SIZE];
 
     sdata1[tx + ty * BLOCK_SIZE] = 0;
     sdata2[tx + ty * BLOCK_SIZE] = 0;
-
-    if (ty == 0 && jidx < size) {
-        jpositions[tx * 3 + 0] = positions[jidx * 3 + 0];
-        jpositions[tx * 3 + 1] = positions[jidx * 3 + 1];
-        jpositions[tx * 3 + 2] = positions[jidx * 3 + 2];
-    }
-
-    if (ty == 1 && jidx < size) {
-        jareas[tx] = areas[jidx];
-    }
-
-    if (ty == 2 && jidx < size) {
-        ju[tx] = u[jidx];
-    }
-
-    if (ty == 3 && iidx_ < size) {
-        ipositions[tx * 3 + 0] = positions[iidx_ * 3 + 0];
-        ipositions[tx * 3 + 1] = positions[iidx_ * 3 + 1];
-        ipositions[tx * 3 + 2] = positions[iidx_ * 3 + 2];
-    }
-
-    if (ty == 4 && iidx_ < size) {
-        double normals_[3];
-        normals_[0] = normals[iidx_ * 3 + 0];
-        normals_[1] = normals[iidx_ * 3 + 1];
-        normals_[2] = normals[iidx_ * 3 + 2];
-
-        double x, y, z, rn;
-        if (abs(normals_[0]) > 0.1) {
-            x = -normals_[2];
-            y = 0;
-            z = normals_[0];
-        } else {
-            x = 0;
-            y = normals_[2];
-            z = -normals_[1];
-        }
-        rn = rnorm3d(x, y, z);
-        itx1[tx * 3 + 0] = x * rn;
-        itx1[tx * 3 + 1] = y * rn;
-        itx1[tx * 3 + 2] = z * rn;
-
-        x = normals_[1] * itx1[tx * 3 + 2] - normals_[2] * itx1[tx * 3 + 1];
-        y = normals_[2] * itx1[tx * 3 + 0] - normals_[0] * itx1[tx * 3 + 2];
-        z = normals_[0] * itx1[tx * 3 + 1] - normals_[1] * itx1[tx * 3 + 0];
-
-        rn = rnorm3d(x, y, z);
-        itx2[tx * 3 + 0] = x * rn;
-        itx2[tx * 3 + 1] = y * rn;
-        itx2[tx * 3 + 2] = z * rn;
-    }
-    __syncthreads();
     if (jidx < size && iidx < size && iidx != jidx) {
-        double r[3];
-        r[0] = jpositions[tx * 3 + 0] - ipositions[ty * 3 + 0];
-        r[1] = jpositions[tx * 3 + 1] - ipositions[ty * 3 + 1];
-        r[2] = jpositions[tx * 3 + 2] - ipositions[ty * 3 + 2];
-        double rd = r[0] * itx1[ty * 3 + 0] + r[1] * itx1[ty * 3 + 1] +
-                    r[2] * itx1[ty * 3 + 2];
-        double rs = norm3d(r[0], r[1], r[2]);
-        rs = rs * rs * rs;
-        rs = max(rs, eps);
-        const double C = 1.0 / (4.0 * 3.141592653589783);
-        double dG = C * rd / rs;
-        sdata1[tx + ty * BLOCK_SIZE] = -dG * jareas[tx] * ju[tx];
+        double3 pi;
+        double3 pj;
+        double3 ni;
+        double3 ti1;
+        double3 ti2;
+        double3 r;
+        pi = ((double3 *)positions)[iidx];
+        pj = ((double3 *)positions)[jidx];
+        ni = ((double3 *)normals)[iidx];
+        ti1 = ((double3 *)tangential1)[iidx];
+        ti2 = ((double3 *)tangential2)[iidx];
+        r.x = pj.x - pi.x;
+        r.y = pj.y - pi.y;
+        r.z = pj.z - pi.z;
+        double rd = r.x * ti1.x + r.y * ti1.y + r.z * ti1.z;
+        double rs = r.x * r.x + r.y * r.y + r.z * r.z;
+        rs = (1 / rs) * rsqrt(rs);
+        rs = min(rs, 1 / eps);
+        // rs = (rs > 1 / eps) ? 0 : rs;
+        constexpr double C = 1.0 / (4.0 * 3.141592653589793);
+        double dG = C * rd * rs;
+        sdata1[tx + ty * BLOCK_SIZE] = -dG * areas[jidx] * u[jidx];
 
-        rd = r[0] * itx2[ty * 3 + 0] + r[1] * itx2[ty * 3 + 1] +
-             r[2] * itx2[ty * 3 + 2];
-        dG = C * rd / rs;
-        sdata2[tx + ty * BLOCK_SIZE] = -dG * jareas[tx] * ju[tx];
+        rd = r.x * ti2.x + r.y * ti2.y + r.z * ti2.z;
+        dG = C * rd * rs;
+        sdata2[tx + ty * BLOCK_SIZE] = -dG * areas[jidx] * u[jidx];
     }
     __syncthreads();
     if (tx < 16) {
-        warp_reduce(sdata1 + ty * BLOCK_SIZE, tx);
-        warp_reduce(sdata2 + ty * BLOCK_SIZE, tx);
+        warp_reduce32(sdata1 + ty * BLOCK_SIZE, tx);
+        warp_reduce32(sdata2 + ty * BLOCK_SIZE, tx);
     }
-    __syncthreads();
     if (tx == 0 && iidx < size) {
         atomicAdd(Ht1 + iidx, sdata1[ty * BLOCK_SIZE]);
         atomicAdd(Ht2 + iidx, sdata2[ty * BLOCK_SIZE]);
@@ -258,9 +260,8 @@ __global__ void compute_pressure(double *__restrict__ pressures,
                                  const int size) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < size) {
-        const double mu = 4e-7 * 3.141592653589783;
-        double w = mu * (1 + chi) / (-chi) * u[idx];
-        double Hn = -w / (mu * (1 + chi));
+        const double mu = 4e-7 * 3.141592653589793;
+        double Hn = 1 / chi * u[idx];
         double Hn_ = Hn * (1 + chi);
         double Ht_squared = Ht1[idx] * Ht1[idx] + Ht2[idx] * Ht2[idx];
         double pressure = 0;
@@ -276,20 +277,27 @@ void SolveMagneticCUDA(const void *positions, const void *normals,
                        const double chi, const double epsilon) {
     static DeviceMem device_positions;
     static DeviceMem device_normals;
+    static DeviceMem device_tangential1;
+    static DeviceMem device_tangential2;
     static DeviceMem device_areas;
     static DeviceMem device_Hext;
     static DeviceMem device_pressures;
     static DeviceMem device_buffer0;
     static DeviceMem device_buffer1;
     static DeviceMem device_buffer2;
+    static DeviceMem device_buffer3;
     device_positions.resize(size * 3, sizeof(double));
     device_normals.resize(size * 3, sizeof(double));
+    device_tangential1.resize(size * 3, sizeof(double));
+    device_tangential2.resize(size * 3, sizeof(double));
     device_areas.resize(size, sizeof(double));
     device_Hext.resize(3, sizeof(double));
     device_pressures.resize(size, sizeof(double));
     device_buffer0.resize(size, sizeof(double));
     device_buffer1.resize(size, sizeof(double));
     device_buffer2.resize(size, sizeof(double));
+    device_buffer3.resize(1, sizeof(double));
+    cudaMemset(device_buffer3.data(), 0, sizeof(double));
     cudaMemcpy(device_positions.data(), positions, size * 3 * sizeof(double),
                cudaMemcpyHostToDevice);
     cudaMemcpy(device_normals.data(), normals, size * 3 * sizeof(double),
@@ -326,19 +334,29 @@ void SolveMagneticCUDA(const void *positions, const void *normals,
         }
     }
     {
+        int threadnum = 1024;
+        int blocknum = (size + threadnum - 1) / threadnum;
+        compute_residual<<<blocknum, threadnum>>>(
+            (double *)device_buffer3.data(), utmp, u, size);
+    }
+    {
         double *Ht1 = utmp;
         double *Ht2 = b;
         int threadnum = 128;
         int blocknum = (size + threadnum - 1) / threadnum;
-        init_Ht<<<blocknum, threadnum>>>(Ht1, Ht2, (double *)device_Hext.data(),
-                                         (double *)device_normals.data(), size);
+        init_Ht<<<blocknum, threadnum>>>(
+            Ht1, Ht2, (double *)device_tangential1.data(),
+            (double *)device_tangential2.data(), (double *)device_Hext.data(),
+            (double *)device_normals.data(), size);
         const int BLOCK_SIZE = 32;
         dim3 grid_dim = dim3((size + BLOCK_SIZE - 1) / BLOCK_SIZE,
                              (size + BLOCK_SIZE - 1) / BLOCK_SIZE);
         dim3 block_dim = dim3(BLOCK_SIZE, BLOCK_SIZE);
         compute_Ht<BLOCK_SIZE><<<grid_dim, block_dim>>>(
             Ht1, Ht2, u, (double *)device_positions.data(),
-            (double *)device_normals.data(), (double *)device_areas.data(),
+            (double *)device_normals.data(),
+            (double *)device_tangential1.data(),
+            (double *)device_tangential2.data(), (double *)device_areas.data(),
             epsilon, size);
         compute_pressure<<<blocknum, threadnum>>>(
             (double *)device_pressures.data(), Ht1, Ht2, u, chi, size);
@@ -351,6 +369,12 @@ void SolveMagneticCUDA(const void *positions, const void *normals,
     }
     cudaMemcpy(pressures, device_pressures.data(), size * sizeof(double),
                cudaMemcpyDeviceToHost);
+    double sum = 0;
+    cudaMemcpy(&sum, device_buffer3.data(), sizeof(double),
+               cudaMemcpyDeviceToHost);
+    sum /= size;
+
+    printf("residual %.3e ", sum);
 };
 
 } // namespace Pivot

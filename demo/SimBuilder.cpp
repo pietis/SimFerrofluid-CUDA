@@ -123,7 +123,7 @@ SimBuilder::BuildDambreak(SimBuildOptions const &options) {
 
 std::unique_ptr<Simulation>
 SimBuilder::BuildPlane(SimBuildOptions const &options) {
-    constexpr double length = .1;
+    constexpr double length = .16;
     constexpr int bw = 2;
     int const scale = options.Scale < 0 ? 64 : options.Scale;
     StaggeredGrid sgrid(2, length / (scale - bw * 2),
@@ -133,7 +133,7 @@ SimBuilder::BuildPlane(SimBuildOptions const &options) {
     sim->m_MagneticEnabled = true;
     CSG::Union(sim->m_LevelSet,
                ImplicitPlane(sgrid.GetDomainOrigin() +
-                                 Vector3d::Unit(1) * length * .25,
+                                 Vector3d::Unit(1) * length * .2,
                              Vector3d::Unit(1)));
     return sim;
 }
