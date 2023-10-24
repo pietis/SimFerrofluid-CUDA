@@ -86,7 +86,7 @@ class EvalLists
     Clock t1;
     near_batch_.execute(c);
     double time1 = t1.seconds();
-    std::cout << "near_batch in " << time1 << " secs" << std::endl;
+    // std::cout << "near_batch in " << time1 << " secs" << std::endl;
     
 
     // Initialize all the multipoles and locals (not all may be needed)
@@ -103,13 +103,13 @@ class EvalLists
       UpwardPass::eval(c.source_tree(), up);
     }
     double time2 = t2.seconds();
-    std::cout << "upwardpass in " << time2 << " secs" << std::endl;
+    // std::cout << "upwardpass in " << time2 << " secs" << std::endl;
 
     Clock t3;
     // Perform the source-target box interactions
     far_batch_.execute(c);
     double time3 = t3.seconds();
-    std::cout << "far_batch in " << time3 << " secs" << std::endl;
+    // std::cout << "far_batch in " << time3 << " secs" << std::endl;
 
     Clock t4;
     // Perform the downward pass (not all may be needed)
@@ -119,7 +119,7 @@ class EvalLists
       DownwardPass::eval(c.target_tree(), down);
     }
     double time4 = t4.seconds();
-    std::cout << "down pass in " << time4 << " secs" << std::endl;
+    // std::cout << "down pass in " << time4 << " secs" << std::endl;
   }
 };
 

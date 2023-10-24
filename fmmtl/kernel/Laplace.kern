@@ -56,7 +56,7 @@ struct LaplaceKernel
     Vec<3,double> dist = s - t;            //   Vector from target to source
     double R2 = norm_2_sq(dist);           //   R^2
     double invR2;                          //   1 / R^2
-    if (R2 > 0)  invR2 = 1.0 / R2;         //   Exclude self interaction
+    if (R2 > 1e-5)  invR2 = 1.0 / R2;         //   Exclude self interaction
     else         invR2 = 0.0;
     double invR = std::sqrt(invR2);        //   Potential
     dist *= invR2 * invR;                  //   Force

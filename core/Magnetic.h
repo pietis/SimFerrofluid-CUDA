@@ -7,6 +7,8 @@
 
 #include "omp.h"
 
+#include "MagneticFMM.h"
+
 namespace Pivot {
 class Magnetic {
   private:
@@ -20,10 +22,14 @@ class Magnetic {
         auto sw = StopWatch("mag.");
         InitSolver();
         // SolveMagnetic();
-        SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
+        SolveMagneticFMM(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
                           m_Mesh->Areas.data(), &m_Hext,
                           m_MagneticPressure.data(), m_Mesh->size(),
                           m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
+        // SolveMagneticCUDA(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
+        //                   m_Mesh->Areas.data(), &m_Hext,
+        //                   m_MagneticPressure.data(), m_Mesh->size(),
+        //                   m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
         fmt::print("{:>8.3f}s ", sw.Stop());
     }
 
