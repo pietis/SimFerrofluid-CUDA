@@ -132,8 +132,7 @@ class Magnetic {
     Vector3d m_Hext = Vector3d(0, 5e4, 0);
 
     int m_NumIteration = 15;
-    // double m_EpsFPI = 5e-9;
-    double m_EpsFPI = 1e-8;
+    double m_EpsFPI = 1e-6;
     double m_StopThres = 1e-6;
 };
 } // namespace Pivot
