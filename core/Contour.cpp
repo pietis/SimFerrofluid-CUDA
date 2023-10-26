@@ -89,6 +89,7 @@ void Contour::Generate(GridData<double> const &grData, double value) {
 void Contour::ComputeVertexInfos() {
     m_Mesh.ComputeNormals();
     m_Mesh.ComputeAreas();
+    m_Mesh.ComputeMeanCurvatures();
 }
 void Contour::ComputeVertexInfosFromLS(GridData<double> const &levelSet) {
     m_Mesh.ComputeAreas();

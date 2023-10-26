@@ -21,21 +21,30 @@ namespace Pivot {
 	void Simulation::Describe(YAML::Node &root) const {
 		root["Dimension"] = 3;
 		root["Radius"] = m_SGrid.GetDomainRadius() * 2;
-		{ // Description of contour
-			YAML::Node node;
-			node["Name"] = "contour";
-			node["Animated"] = true;
-			node["Indexed"] = true;
-			// node["Shader"] = "heatmap";
-			node["Primitive"] = "Triangles";
-			node["Material"]["Albedo"] = Vector4f(0, 0, 1, 1);
-			root["Objects"].push_back(node);
-		}
+		// { // Description of contour
+		// 	YAML::Node node;
+		// 	node["Name"] = "contour";
+		// 	node["Animated"] = true;
+		// 	node["Indexed"] = true;
+		// 	// node["Shader"] = "heatmap";
+		// 	node["Primitive"] = "Triangles";
+		// 	node["Material"]["Albedo"] = Vector4f(0, 0, 1, 1);
+		// 	root["Objects"].push_back(node);
+		// }
 		{ // Description of collider
 			YAML::Node node;
 			node["Name"] = "collider";
 			node["Primitive"] = "Points";
 			node["Material"]["Albedo"] = Vector4f(.5f, .5f, .5f, 1);
+			root["Objects"].push_back(node);
+		}
+		{
+			YAML::Node node;
+			node["Name"] = "curv";
+			node["Animated"] = true;
+			node["Indexed"] = true;
+			node["Shader"] = "heatmap";
+			node["Primitive"] = "Triangles";
 			root["Objects"].push_back(node);
 		}
 	}
@@ -63,6 +72,21 @@ namespace Pivot {
 				Vector3d const n = TriLerp::Interpolate(m_Collider.GetNormal(), pos).normalized();
 				IO::Write(fout, n.cast<float>().eval());
 			});
+		}
+		{
+			std::ofstream fout(dirname / "curv.out", std::ios::binary);
+			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Positions.size()));
+			for (auto const &pos : m_Contour.GetMesh().Positions) {
+				IO::Write(fout, pos.cast<float>().eval());
+			}
+			for (auto const &normal : m_Contour.GetMesh().Normals) {
+				IO::Write(fout, normal.cast<float>().eval());
+			}
+			for (auto const &curv : m_Contour.GetMesh().MeanCurvatures) {
+				IO::Write(fout, abs((float)curv));
+			}
+			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Indices.size()));
+			IO::Write(fout, m_Contour.GetMesh().Indices);
 		}
 	}
 
@@ -125,11 +149,18 @@ namespace Pivot {
 				double const kappa1 = FiniteDiff::CalcCurvature(m_LevelSet, cell1);
 				double const kappa = (1 - theta) * kappa0 + theta * kappa1;
 				pressure += kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+
+				// int index =
+				// 	m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
+				// if(index >= 0){
+				// 	pressure += m_Contour.GetMesh().MeanCurvatures[index] * m_SurfaceTensionCoeff /
+				// 				m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+				// }
 			}
 			if (m_MagneticEnabled) {
 				int index =
 					m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
-				if(index > 0){
+				if(index >= 0){
 					pressure += m_Magnetic.m_MagneticPressure[index] /
 								m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
 				}
@@ -169,9 +200,9 @@ namespace Pivot {
 		// auto opLevelSet = m_LevelSet;
 		// CSG::Except(opLevelSet, m_Collider.GetAuxLevelSet());
 		m_Contour.Generate(m_LevelSet);
-		// m_Contour.ComputeVertexInfos();
+		m_Contour.ComputeVertexInfos();
 
-		m_Contour.ComputeVertexInfosFromLS(m_LevelSet);
+		// m_Contour.ComputeVertexInfosFromLS(m_LevelSet);
 		m_Contour.ComputeVolumeFromLS(m_LevelSet);
 
 		m_CurrentVolume = m_Contour.GetMesh().TotalVolume;

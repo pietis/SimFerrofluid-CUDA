@@ -88,10 +88,11 @@ SimBuilder::BuildDroplet(SimBuildOptions const &options) {
     auto sim = std::make_unique<Simulation>(sgrid);
     sim->m_GravityEnabled = false;
     sim->m_SurfaceTensionEnabled = true;
-    sim->m_SemiImplicitSTEnabled = true;
+    // sim->m_SemiImplicitSTEnabled = true;
     CSG::Union(
         sim->m_LevelSet,
         ImplicitEllipsoid(Vector3d::Zero(), Vector3d(.4, .25, .25) * length));
+        // ImplicitEllipsoid(Vector3d::Zero(), Vector3d(.25, .25, .25) * length));
     return sim;
 }
 

@@ -71,7 +71,29 @@ void SurfaceMesh::ComputeAreas() {
 }
 
 void SurfaceMesh::ComputeMeanCurvatures() {
-    // TODO
     ComputeAreas();
+    MeanCurvatures.resize(Positions.size());
+    std::vector<Vector3d> sum(Positions.size(), Vector3d::Zero());
+    for (std::size_t i = 0; i < Indices.size(); i += 3) {
+        auto const i0 = Indices[i + 0];
+        auto const i1 = Indices[i + 1];
+        auto const i2 = Indices[i + 2];
+        auto const v0 = (Positions[i2] - Positions[i1]).normalized();
+        auto const v1 = (Positions[i0] - Positions[i2]).normalized();
+        auto const v2 = (Positions[i1] - Positions[i0]).normalized();
+        Vector3d const l0 = Positions[i2] - Positions[i1];
+        Vector3d const l1 = Positions[i0] - Positions[i2];
+        Vector3d const l2 = Positions[i1] - Positions[i0];
+        double cot0 = 1.0 / tan(acos(-v1.dot(v2)));
+        double cot1 = 1.0 / tan(acos(-v2.dot(v0)));
+        double cot2 = 1.0 / tan(acos(-v0.dot(v1)));
+        sum[i0] += l2 * cot2 - l1 * cot1;
+        sum[i1] += l0 * cot0 - l2 * cot2;
+        sum[i2] += l1 * cot1 - l0 * cot0;
+    }
+
+    for (int i = 0; i < Positions.size(); i += 1) {
+        MeanCurvatures[i] = sum[i].norm() / (4 * Areas[i]);
+    }
 }
 } // namespace Pivot
