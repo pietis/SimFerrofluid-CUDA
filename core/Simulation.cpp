@@ -47,6 +47,15 @@ namespace Pivot {
 			node["Primitive"] = "Triangles";
 			root["Objects"].push_back(node);
 		}
+		if(m_MagneticEnabled){
+			YAML::Node node;
+			node["Name"] = "mag_pressure";
+			node["Animated"] = true;
+			node["Indexed"] = true;
+			node["Shader"] = "heatmap";
+			node["Primitive"] = "Triangles";
+			root["Objects"].push_back(node);
+		}
 	}
 
 	void Simulation::Export(std::filesystem::path const &dirname, bool initial) const {
@@ -88,6 +97,21 @@ namespace Pivot {
 			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Indices.size()));
 			IO::Write(fout, m_Contour.GetMesh().Indices);
 		}
+		if(m_MagneticEnabled){
+			std::ofstream fout(dirname / "mag_pressure.out", std::ios::binary);
+			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Positions.size()));
+			for (auto const &pos : m_Contour.GetMesh().Positions) {
+				IO::Write(fout, pos.cast<float>().eval());
+			}
+			for (auto const &normal : m_Contour.GetMesh().Normals) {
+				IO::Write(fout, normal.cast<float>().eval());
+			}
+			for (auto const &mag_pressure : m_Magnetic.m_MagneticPressure) {
+				IO::Write(fout, abs((float)mag_pressure));
+			}
+			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Indices.size()));
+			IO::Write(fout, m_Contour.GetMesh().Indices);
+		}
 	}
 
 	void Simulation::Save(std::ostream &out) const {
@@ -101,6 +125,10 @@ namespace Pivot {
 		CSG::Intersect(m_LevelSet, m_Collider.GetDomainBox());
 		
 		ReinitializeLevelSet(true);
+
+		if(m_MagneticEnabled){
+			m_Magnetic.Solve(m_Contour.GetMesh());
+		}
 	}
 
 	void Simulation::Advance(double deltaTime) {
@@ -143,19 +171,19 @@ namespace Pivot {
 		m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
 			double pressure = 0;
 			if (m_SurfaceTensionEnabled && !m_SemiImplicitSTEnabled) {
-				Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
-				Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
-				double const kappa0 = FiniteDiff::CalcCurvature(m_LevelSet, cell0);
-				double const kappa1 = FiniteDiff::CalcCurvature(m_LevelSet, cell1);
-				double const kappa = (1 - theta) * kappa0 + theta * kappa1;
-				pressure += kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+				// Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
+				// Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
+				// double const kappa0 = FiniteDiff::CalcCurvature(m_LevelSet, cell0);
+				// double const kappa1 = FiniteDiff::CalcCurvature(m_LevelSet, cell1);
+				// double const kappa = (1 - theta) * kappa0 + theta * kappa1;
+				// pressure += kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
 
-				// int index =
-				// 	m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
-				// if(index >= 0){
-				// 	pressure += m_Contour.GetMesh().MeanCurvatures[index] * m_SurfaceTensionCoeff /
-				// 				m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
-				// }
+				int index =
+					m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
+				if(index >= 0){
+					pressure += m_Contour.GetMesh().MeanCurvatures[index] * m_SurfaceTensionCoeff /
+								m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
+				}
 			}
 			if (m_MagneticEnabled) {
 				int index =
@@ -200,9 +228,9 @@ namespace Pivot {
 		// auto opLevelSet = m_LevelSet;
 		// CSG::Except(opLevelSet, m_Collider.GetAuxLevelSet());
 		m_Contour.Generate(m_LevelSet);
-		m_Contour.ComputeVertexInfos();
+		// m_Contour.ComputeVertexInfos();
 
-		// m_Contour.ComputeVertexInfosFromLS(m_LevelSet);
+		m_Contour.ComputeVertexInfosFromLS(m_LevelSet);
 		m_Contour.ComputeVolumeFromLS(m_LevelSet);
 
 		m_CurrentVolume = m_Contour.GetMesh().TotalVolume;

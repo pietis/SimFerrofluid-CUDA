@@ -3,6 +3,7 @@
 #include "StaggeredGrid.h"
 
 #include "FiniteDiff.h"
+#include "LagrangeDiff.h"
 
 #include "fraction.hpp"
 
@@ -118,12 +119,34 @@ void Contour::ComputeVertexInfosFromLS(GridData<double> const &levelSet) {
                 Vector3d grad =
                     ((1 - theta) * grad0 + theta * grad1).normalized();
                 m_Mesh.Normals[index] = grad;
-                double const kappa0 =
-                    FiniteDiff::CalcCurvature(levelSet, cell0);
-                double const kappa1 =
-                    FiniteDiff::CalcCurvature(levelSet, cell1);
-                double const kappa = (1 - theta) * kappa0 + theta * kappa1;
-                m_Mesh.MeanCurvatures[index] = kappa;
+                // double const kappa0 =
+                //     FiniteDiff::CalcCurvature(levelSet, cell0);
+                // double const kappa1 =
+                //     FiniteDiff::CalcCurvature(levelSet, cell1);
+                // double const kappa = (1 - theta) * kappa0 + theta * kappa1;
+                // m_Mesh.MeanCurvatures[index] = kappa;
+                // double phi_x =
+                //     (1 - theta) * FiniteDiff::CalcFirstDrv(levelSet, cell0, 0) +
+                //     theta * FiniteDiff::CalcFirstDrv(levelSet, cell1, 0);
+                // double phi_y =
+                //     (1 - theta) * FiniteDiff::CalcFirstDrv(levelSet, cell0, 1) +
+                //     theta * FiniteDiff::CalcFirstDrv(levelSet, cell1, 1);
+                // double phi_z =
+                //     (1 - theta) * FiniteDiff::CalcFirstDrv(levelSet, cell0, 2) +
+                //     theta * FiniteDiff::CalcFirstDrv(levelSet, cell1, 2);
+                // double phi_xx =
+                //     (1 - theta) *
+                //         FiniteDiff::CalcSecondDrv(levelSet, cell0, 0, 0) +
+                //     theta * FiniteDiff::CalcSecondDrv(levelSet, cell1, 0, 0);
+                // double phi_xy =
+                //     (1 - theta) *
+                //         FiniteDiff::CalcSecondDrv(levelSet, cell0, 0, 1) +
+                //     theta * FiniteDiff::CalcSecondDrv(levelSet, cell1, 0, 1);
+                // fmt::print("{:.3e} {:.3e} {:.3e} {:.3e} {:.3e} {:.3e}\n", phi_x,
+                //            phi_y, phi_z, phi_xx, phi_xy, kappa);
+                Vector3d pos = m_Mesh.Positions[index];
+                m_Mesh.MeanCurvatures[index] =
+                    LagrangeDiff::CalcCurvature<7>(levelSet, pos);
             }
         }
     });
