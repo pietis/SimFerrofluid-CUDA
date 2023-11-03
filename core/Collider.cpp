@@ -19,7 +19,8 @@ namespace Pivot {
 	}
 
 	void Collider::Finish(StaggeredGrid const &sgrid) {
-		Reinitialization::Solve(LevelSet, -1);
+		FastMarching::Solve(LevelSet, -1);
+		// Reinitialization::Solve(LevelSet, sgrid.GetResolution().maxCoeff() * 2);
 		ParallelForEach(m_AuxLevelSet.GetGrid(), [&](Vector3i const &cell) {
 			for (int i = 0; i < StaggeredGrid::GetNumNodesPerCell(); i++) {
 				m_AuxLevelSet[cell] += LevelSet[StaggeredGrid::NodeOfCell(cell, i)];
