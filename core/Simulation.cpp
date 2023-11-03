@@ -222,8 +222,8 @@ namespace Pivot {
 		Extrapolation::Solve(m_LevelSet, 1.5 * m_SGrid.GetSpacing(), 1, [&](Vector3i const &cell) {
 			return !m_Collider.IsInside(cell);
 		});
-		CSG::Except(m_LevelSet, m_Collider.GetAuxLevelSet());
-		Reinitialization::Solve(m_LevelSet, 5);
+		// FastMarching::Solve(m_LevelSet, 5);
+		Reinitialization::Solve(m_LevelSet, 10);
 
 		// auto opLevelSet = m_LevelSet;
 		// CSG::Except(opLevelSet, m_Collider.GetAuxLevelSet());
