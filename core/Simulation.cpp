@@ -141,6 +141,11 @@ namespace Pivot {
 	}
 
 	void Simulation::AdvectFields(double dt) {
+		ParallelForEach(m_Velocity.GetGrids(), [&](int axis, Vector3i const &face) {
+			m_Velocity[axis][face] *= exp(-8 * dt);
+		});
+		
+
 		Advection::Solve<2>(m_LevelSet, m_Velocity, dt);
 		Advection::Solve<2>(m_Velocity, m_Velocity, dt);
 
@@ -171,13 +176,6 @@ namespace Pivot {
 		m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
 			double pressure = 0;
 			if (m_SurfaceTensionEnabled && !m_SemiImplicitSTEnabled) {
-				// Vector3i const cell0 = StaggeredGrid::AdjCellOfFace(axis, face, 0);
-				// Vector3i const cell1 = StaggeredGrid::AdjCellOfFace(axis, face, 1);
-				// double const kappa0 = FiniteDiff::CalcCurvature(m_LevelSet, cell0);
-				// double const kappa1 = FiniteDiff::CalcCurvature(m_LevelSet, cell1);
-				// double const kappa = (1 - theta) * kappa0 + theta * kappa1;
-				// pressure += kappa * m_SurfaceTensionCoeff / m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
-
 				int index =
 					m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
 				if(index >= 0){
@@ -222,6 +220,7 @@ namespace Pivot {
 		Extrapolation::Solve(m_LevelSet, 1.5 * m_SGrid.GetSpacing(), 1, [&](Vector3i const &cell) {
 			return !m_Collider.IsInside(cell);
 		});
+		CSG::Except(m_LevelSet, m_Collider.GetAuxLevelSet());
 		// FastMarching::Solve(m_LevelSet, 5);
 		Reinitialization::Solve(m_LevelSet, 10);
 

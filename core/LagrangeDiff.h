@@ -139,9 +139,6 @@ class LagrangeDiff {
         kappa /= gradNorm2 * std::sqrt(gradNorm2);
         double const invDx = data.GetGrid().GetInvSpacing();
 
-        // printf("%.3e %.3e %.3e %.3e %.3e %.3e\n\n", phi_x, phi_y, phi_z,
-        // phi_xx,
-        //        phi_xy, kappa);
         return std::abs(kappa) < invDx ? kappa : (kappa < 0 ? -1 : +1) * invDx;
         // return kappa;
     }

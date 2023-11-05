@@ -124,7 +124,7 @@ SimBuilder::BuildDambreak(SimBuildOptions const &options) {
 
 std::unique_ptr<Simulation>
 SimBuilder::BuildPlane(SimBuildOptions const &options) {
-    constexpr double length = .16;
+    constexpr double length = .12;
     constexpr int bw = 2;
     int const scale = options.Scale < 0 ? 64 : options.Scale;
     StaggeredGrid sgrid(2, length / (scale - bw * 2),
