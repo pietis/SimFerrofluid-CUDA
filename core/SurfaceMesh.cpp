@@ -96,4 +96,39 @@ void SurfaceMesh::ComputeMeanCurvatures() {
         MeanCurvatures[i] = sum[i].norm() / (4 * Areas[i]);
     }
 }
+
+void SurfaceMesh::SmoothCurvature(double lambda, int iteration) {
+    std::vector<double> newCurvatures(size());
+    std::vector<double> weightSum(size());
+
+    for (int iter = 0; iter < iteration; iter++) {
+        newCurvatures.assign(size(), 0);
+        weightSum.assign(size(), 0);
+        for (std::size_t i = 0; i < Indices.size(); i += 3) {
+            auto const i0 = Indices[i + 0];
+            auto const i1 = Indices[i + 1];
+            auto const i2 = Indices[i + 2];
+            auto const v0 = (Positions[i2] - Positions[i1]).normalized();
+            auto const v1 = (Positions[i0] - Positions[i2]).normalized();
+            auto const v2 = (Positions[i1] - Positions[i0]).normalized();
+            double const a0 = std::acos(-v1.dot(v2));
+            double const a1 = std::acos(-v2.dot(v0));
+            double const a2 = std::acos(-v0.dot(v1));
+            newCurvatures[i0] += MeanCurvatures[i1] * a2;
+            newCurvatures[i0] += MeanCurvatures[i2] * a1;
+            newCurvatures[i1] += MeanCurvatures[i0] * a2;
+            newCurvatures[i1] += MeanCurvatures[i2] * a0;
+            newCurvatures[i2] += MeanCurvatures[i0] * a1;
+            newCurvatures[i2] += MeanCurvatures[i1] * a0;
+            weightSum[i0] += a1 + a2;
+            weightSum[i1] += a0 + a2;
+            weightSum[i2] += a0 + a1;
+        }
+        for (int i = 0; i < size(); i++) {
+            MeanCurvatures[i] = lambda * (newCurvatures[i] / weightSum[i]) +
+                                (1 - lambda) * MeanCurvatures[i];
+        }
+    }
+}
+
 } // namespace Pivot

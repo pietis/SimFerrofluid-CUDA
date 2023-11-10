@@ -92,7 +92,7 @@ namespace Pivot {
 				IO::Write(fout, normal.cast<float>().eval());
 			}
 			for (auto const &curv : m_Contour.GetMesh().MeanCurvatures) {
-				IO::Write(fout, abs((float)curv));
+				IO::Write(fout, (float)curv);
 			}
 			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Indices.size()));
 			IO::Write(fout, m_Contour.GetMesh().Indices);
@@ -107,7 +107,7 @@ namespace Pivot {
 				IO::Write(fout, normal.cast<float>().eval());
 			}
 			for (auto const &mag_pressure : m_Magnetic.m_MagneticPressure) {
-				IO::Write(fout, abs((float)mag_pressure));
+				IO::Write(fout, (float)mag_pressure);
 			}
 			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Indices.size()));
 			IO::Write(fout, m_Contour.GetMesh().Indices);
@@ -231,6 +231,7 @@ namespace Pivot {
 
 		m_Contour.ComputeVertexInfosFromLS(m_LevelSet);
 		m_Contour.ComputeVolumeFromLS(m_LevelSet);
+		// m_Contour.GetMesh().SmoothCurvature(0.5, 10);
 
 		m_CurrentVolume = m_Contour.GetMesh().TotalVolume;
 		if (initial) {

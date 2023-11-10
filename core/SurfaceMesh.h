@@ -18,6 +18,7 @@ namespace Pivot {
 		void ComputeNormals();
 		void ComputeAreas();
 		void ComputeMeanCurvatures();
+		void SmoothCurvature(double lambda, int iteration);
 
 	public:
 		std::vector<Vector3d>      Positions;
