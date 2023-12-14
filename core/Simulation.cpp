@@ -142,7 +142,7 @@ namespace Pivot {
 
 	void Simulation::AdvectFields(double dt) {
 		ParallelForEach(m_Velocity.GetGrids(), [&](int axis, Vector3i const &face) {
-			m_Velocity[axis][face] *= exp(-8 * dt);
+			m_Velocity[axis][face] *= exp(-m_Damping * dt);
 		});
 		
 

@@ -57,6 +57,7 @@ class Simulation {
     double m_CurrentVolume;
     double m_CumulVolError = 0;
     double m_VolError = 0;
+    double m_Damping = 0;
 
     double m_LiquidDensity = 1e3;
     double m_SurfaceTensionCoeff = 7.28e-2;
