@@ -125,12 +125,14 @@ void Contour::ComputeVertexInfosFromLS(GridData<double> const &levelSet) {
                 //     FiniteDiff::CalcCurvature(levelSet, cell1);
                 // double const kappa = (1 - theta) * kappa0 + theta * kappa1;
                 // m_Mesh.MeanCurvatures[index] = kappa;
+
                 Vector3d pos = m_Mesh.Positions[index];
                 m_Mesh.MeanCurvatures[index] =
                     LagrangeDiff::CalcCurvature<5>(levelSet, pos);
             }
         }
     });
+    // m_Mesh.ComputeQuadricCurvatures();
 };
 
 void Contour::ComputeVolumeFromLS(GridData<double> const &levelSet) {

@@ -232,6 +232,16 @@ namespace Pivot {
 		m_Contour.ComputeVertexInfosFromLS(m_LevelSet);
 		m_Contour.ComputeVolumeFromLS(m_LevelSet);
 		// m_Contour.GetMesh().SmoothCurvature(0.5, 10);
+		// double cmin=std::numeric_limits<double>::max();
+		// double cmax=std::numeric_limits<double>::min();
+		// double avg=0;
+		// for(int i=0;i<m_Contour.GetMesh().size();i++){
+		// 	cmin = (std::min)(cmin, m_Contour.GetMesh().MeanCurvatures[i]);
+		// 	cmax = (std::max)(cmax, m_Contour.GetMesh().MeanCurvatures[i]);
+		// 	avg += m_Contour.GetMesh().MeanCurvatures[i];
+		// }
+		// avg /= m_Contour.GetMesh().size();
+		// fmt::print("curvature min {:.3e} max {:.3e} avg {:.3e} ", cmin, cmax, avg);
 
 		m_CurrentVolume = m_Contour.GetMesh().TotalVolume;
 		if (initial) {

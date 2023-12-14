@@ -71,7 +71,7 @@ void SurfaceMesh::ComputeAreas() {
 }
 
 void SurfaceMesh::ComputeMeanCurvatures() {
-    ComputeAreas();
+    // ComputeAreas();
     MeanCurvatures.resize(Positions.size());
     std::vector<Vector3d> sum(Positions.size(), Vector3d::Zero());
     for (std::size_t i = 0; i < Indices.size(); i += 3) {
@@ -94,6 +94,60 @@ void SurfaceMesh::ComputeMeanCurvatures() {
 
     for (int i = 0; i < Positions.size(); i += 1) {
         MeanCurvatures[i] = sum[i].norm() / (4 * Areas[i]);
+    }
+}
+
+void SurfaceMesh::ComputeQuadricCurvatures() {
+    // require compute normal first
+    int size = Positions.size();
+    MeanCurvatures.resize(size);
+
+    std::vector<std::vector<std::uint32_t>> neighbors;
+    neighbors.resize(size);
+    
+    for (int i = 0; i < Indices.size(); i += 3) {
+        auto const i0 = Indices[i + 0];
+        auto const i1 = Indices[i + 1];
+        auto const i2 = Indices[i + 2];
+        neighbors[i0].push_back(i1);
+        neighbors[i0].push_back(i2);
+        neighbors[i1].push_back(i0);
+        neighbors[i1].push_back(i2);
+        neighbors[i2].push_back(i0);
+        neighbors[i2].push_back(i1);
+    }
+    for(int i = 0; i < size; i++){
+		Matrix<double, 3, 5> QuadricCoeff; // { u, v, u^2-v^2, 2uv, u^2+v^2 }
+        Matrix<double, Dynamic, 5> quadricMat(neighbors[i].size(), 5);
+		Matrix<double, Dynamic, 3> rhs(neighbors[i].size(), 3);
+		CompleteOrthogonalDecomposition<Matrix<double, Dynamic, 5>> QuadricMatDecomp;
+        auto const normal = Normals[i];
+        Vector3d tx, ty;
+        if(normal.x() > 0.5){
+            tx = Vector3d::Unit(1).cross(normal).normalized();
+            ty = normal.cross(tx).normalized();
+        }else{
+            tx = Vector3d::Unit(0).cross(normal).normalized();
+            ty = normal.cross(tx).normalized();
+        }
+        for(int j = 0; j < neighbors[i].size(); j++){
+            double u, v;
+            Vector3d dpos = (Positions[neighbors[i][j]] - Positions[i]);
+            u = dpos.dot(tx);
+            v = dpos.dot(ty);
+            quadricMat.row(j) << u, v, u * u - v * v, 2 * u * v, u * u + v * v;
+            rhs.row(j) = dpos.transpose();
+        }
+        QuadricCoeff = QuadricMatDecomp.compute(quadricMat).solve(rhs).transpose();
+
+        double const E = QuadricCoeff.col(0).dot(QuadricCoeff.col(0));
+		double const F = QuadricCoeff.col(0).dot(QuadricCoeff.col(1));
+		double const G = QuadricCoeff.col(1).dot(QuadricCoeff.col(1));
+		Vector3d const n = QuadricCoeff.col(0).cross(QuadricCoeff.col(1)).normalized();
+		double const L = (QuadricCoeff.col(4) + QuadricCoeff.col(2)).dot(n) * 2;
+		double const M = QuadricCoeff.col(3).dot(n) * 2;
+		double const N = (QuadricCoeff.col(4) - QuadricCoeff.col(2)).dot(n) * 2;
+		MeanCurvatures[i] = (2 * M * F - L * G - N * E) / (2 * (E * G - F * F));
     }
 }
 
