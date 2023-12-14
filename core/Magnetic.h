@@ -131,7 +131,7 @@ class Magnetic {
     double m_Lambda = (-m_Chi) / (2 + m_Chi);
     Vector3d m_Hext = Vector3d(0, 6e4, 0);
 
-    int m_NumIteration = 15;
+    int m_NumIteration = 10;
     double m_EpsFPI = 1e-6;
     double m_StopThres = 1e-6;
 };
