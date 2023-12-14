@@ -132,7 +132,7 @@ void Contour::ComputeVertexInfosFromLS(GridData<double> const &levelSet) {
             }
         }
     });
-    // m_Mesh.ComputeQuadricCurvatures();
+    // m_Mesh.ComputeQuadricCurvatures(0.0, levelSet.GetGrid().GetSpacing() * 4);
 };
 
 void Contour::ComputeVolumeFromLS(GridData<double> const &levelSet) {

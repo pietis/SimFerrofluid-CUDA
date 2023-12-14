@@ -97,29 +97,45 @@ void SurfaceMesh::ComputeMeanCurvatures() {
     }
 }
 
-void SurfaceMesh::ComputeQuadricCurvatures() {
+void SurfaceMesh::ComputeQuadricCurvatures(double lowerThreshold, double upperThreshold) {
     // require compute normal first
     int size = Positions.size();
     MeanCurvatures.resize(size);
 
-    std::vector<std::vector<std::uint32_t>> neighbors;
+    std::vector<std::set<std::uint32_t>> neighbors;
+    std::vector<std::set<std::uint32_t>> calNeighbors;
     neighbors.resize(size);
+    calNeighbors.resize(size);
     
     for (int i = 0; i < Indices.size(); i += 3) {
         auto const i0 = Indices[i + 0];
         auto const i1 = Indices[i + 1];
         auto const i2 = Indices[i + 2];
-        neighbors[i0].push_back(i1);
-        neighbors[i0].push_back(i2);
-        neighbors[i1].push_back(i0);
-        neighbors[i1].push_back(i2);
-        neighbors[i2].push_back(i0);
-        neighbors[i2].push_back(i1);
+        neighbors[i0].insert(i1);
+        neighbors[i0].insert(i2);
+        neighbors[i1].insert(i0);
+        neighbors[i1].insert(i2);
+        neighbors[i2].insert(i0);
+        neighbors[i2].insert(i1);
+    }
+    for(int i = 0; i < size; i++){
+        for(auto &index: neighbors[i]){
+            if((Positions[index] - Positions[i]).norm() < upperThreshold && (Positions[index] - Positions[i]).norm() > lowerThreshold){
+                calNeighbors[i].insert(index);
+            }
+            for(auto &index2: neighbors[index]){
+                if((Positions[index2] - Positions[i]).norm() < upperThreshold && (Positions[index2] - Positions[i]).norm() > lowerThreshold){
+                    calNeighbors[i].insert(index2);
+                }
+            }
+        }
     }
     for(int i = 0; i < size; i++){
 		Matrix<double, 3, 5> QuadricCoeff; // { u, v, u^2-v^2, 2uv, u^2+v^2 }
-        Matrix<double, Dynamic, 5> quadricMat(neighbors[i].size(), 5);
-		Matrix<double, Dynamic, 3> rhs(neighbors[i].size(), 3);
+        // Matrix<double, Dynamic, 5> quadricMat(neighbors[i].size(), 5);
+		// Matrix<double, Dynamic, 3> rhs(neighbors[i].size(), 3);
+        Matrix<double, Dynamic, 5> quadricMat(calNeighbors[i].size(), 5);
+		Matrix<double, Dynamic, 3> rhs(calNeighbors[i].size(), 3);
 		CompleteOrthogonalDecomposition<Matrix<double, Dynamic, 5>> QuadricMatDecomp;
         auto const normal = Normals[i];
         Vector3d tx, ty;
@@ -130,13 +146,16 @@ void SurfaceMesh::ComputeQuadricCurvatures() {
             tx = Vector3d::Unit(0).cross(normal).normalized();
             ty = normal.cross(tx).normalized();
         }
-        for(int j = 0; j < neighbors[i].size(); j++){
+        int j = 0;
+        // for(auto &index: neighbors[i]){
+        for(auto &index: calNeighbors[i]){
             double u, v;
-            Vector3d dpos = (Positions[neighbors[i][j]] - Positions[i]);
+            Vector3d dpos = (Positions[index] - Positions[i]);
             u = dpos.dot(tx);
             v = dpos.dot(ty);
             quadricMat.row(j) << u, v, u * u - v * v, 2 * u * v, u * u + v * v;
             rhs.row(j) = dpos.transpose();
+            j++;
         }
         QuadricCoeff = QuadricMatDecomp.compute(quadricMat).solve(rhs).transpose();
 
@@ -147,7 +166,7 @@ void SurfaceMesh::ComputeQuadricCurvatures() {
 		double const L = (QuadricCoeff.col(4) + QuadricCoeff.col(2)).dot(n) * 2;
 		double const M = QuadricCoeff.col(3).dot(n) * 2;
 		double const N = (QuadricCoeff.col(4) - QuadricCoeff.col(2)).dot(n) * 2;
-		MeanCurvatures[i] = (2 * M * F - L * G - N * E) / (2 * (E * G - F * F));
+		MeanCurvatures[i] = 2 * (2 * M * F - L * G - N * E) / (2 * (E * G - F * F));
     }
 }
 

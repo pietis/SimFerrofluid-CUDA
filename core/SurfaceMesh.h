@@ -18,7 +18,7 @@ namespace Pivot {
 		void ComputeNormals();
 		void ComputeAreas();
 		void ComputeMeanCurvatures();
-		void ComputeQuadricCurvatures();
+		void ComputeQuadricCurvatures(double lowerThreshold, double upperThreshold);
 		void SmoothCurvature(double lambda, int iteration);
 
 	public:
