@@ -119,16 +119,16 @@ void Contour::ComputeVertexInfosFromLS(GridData<double> const &levelSet) {
                 Vector3d grad =
                     ((1 - theta) * grad0 + theta * grad1).normalized();
                 m_Mesh.Normals[index] = grad;
-                // double const kappa0 =
-                //     FiniteDiff::CalcCurvature(levelSet, cell0);
-                // double const kappa1 =
-                //     FiniteDiff::CalcCurvature(levelSet, cell1);
-                // double const kappa = (1 - theta) * kappa0 + theta * kappa1;
-                // m_Mesh.MeanCurvatures[index] = kappa;
+                double const kappa0 =
+                    FiniteDiff::CalcCurvature(levelSet, cell0);
+                double const kappa1 =
+                    FiniteDiff::CalcCurvature(levelSet, cell1);
+                double const kappa = (1 - theta) * kappa0 + theta * kappa1;
+                m_Mesh.MeanCurvatures[index] = kappa;
 
-                Vector3d pos = m_Mesh.Positions[index];
-                m_Mesh.MeanCurvatures[index] =
-                    LagrangeDiff::CalcCurvature<5>(levelSet, pos);
+                // Vector3d pos = m_Mesh.Positions[index];
+                // m_Mesh.MeanCurvatures[index] =
+                //     LagrangeDiff::CalcCurvature<3>(levelSet, pos);
             }
         }
     });
