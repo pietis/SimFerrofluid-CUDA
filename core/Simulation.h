@@ -11,7 +11,7 @@ class Simulation {
     friend class SimBuilder;
 
   public:
-    enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak, Plane };
+    enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak, Plane, Dipole };
 
   public:
     explicit Simulation(StaggeredGrid const &sgrid);
@@ -52,6 +52,7 @@ class Simulation {
     GridData<double> m_LevelSet;
     Contour m_Contour;
     Magnetic m_Magnetic;
+    std::function<Vector3d(const Vector3d&)> m_FieldApplied;
 
     double m_InitVolume;
     double m_CurrentVolume;

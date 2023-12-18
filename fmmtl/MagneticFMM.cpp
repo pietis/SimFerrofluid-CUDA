@@ -51,8 +51,8 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     for (int i = 0; i < size; i++) {
         b[i] =
             -2 * lambda *
-            (Hext_[0] * normals_[i * 3 + 0] + Hext_[1] * normals_[i * 3 + 1] +
-             Hext_[2] * normals_[i * 3 + 2]);
+            (Hext_[i * 3 + 0] * normals_[i * 3 + 0] + Hext_[i * 3 + 1] * normals_[i * 3 + 1] +
+             Hext_[i * 3 + 2] * normals_[i * 3 + 2]);
         u[i] = b[i];
     }
 
@@ -115,8 +115,8 @@ void SolveMagneticFMM(const void *positions, const void *normals,
         tx2[1] = y / rn;
         tx2[2] = z / rn;
 
-        double Ht1 = Hext_[0] * tx1[0] + Hext_[1] * tx1[1] + Hext_[2] * tx1[2];
-        double Ht2 = Hext_[0] * tx2[0] + Hext_[1] * tx2[1] + Hext_[2] * tx2[2];
+        double Ht1 = Hext_[i * 3 + 0] * tx1[0] + Hext_[i * 3 + 1] * tx1[1] + Hext_[i * 3 + 2] * tx1[2];
+        double Ht2 = Hext_[i * 3 + 0] * tx2[0] + Hext_[i * 3 + 1] * tx2[1] + Hext_[i * 3 + 2] * tx2[2];
 
         Ht1 += -1 / (4 * m_PI) *
                (force[i][1] * tx1[0] + force[i][2] * tx1[1] +

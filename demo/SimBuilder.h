@@ -25,5 +25,7 @@ class SimBuilder {
     BuildDambreak(SimBuildOptions const &options);
     static std::unique_ptr<Simulation>
     BuildPlane(SimBuildOptions const &options);
+    static std::unique_ptr<Simulation>
+    BuildDipole(SimBuildOptions const &options);
 };
 } // namespace Pivot
