@@ -27,7 +27,7 @@ namespace Pivot {
 			return sec;
 		}
 
-		static void PrintStats();
+		static void PrintStats(ofstream &fout);
 
 	private:
 		std::string m_Name;

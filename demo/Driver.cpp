@@ -76,8 +76,12 @@ namespace Pivot {
 			spdlog::info("Estimated total time: {}\n", DurationFormat(prediTime));
 			lastTime = currentTime;
 		}
-		spdlog::info("Completed simulating! (elapsed time: {})", DurationFormat(lastTime - initTime));
-		StopWatch::PrintStats();
+		{
+			std::ofstream fout(m_Dirname / "statistics.txt");
+			spdlog::info("Completed simulating! (elapsed time: {})", DurationFormat(lastTime - initTime));
+			fout << fmt::format("Total elpased time: {}", DurationFormat(lastTime - initTime)) << std::endl << std::endl;
+			StopWatch::PrintStats(fout);
+		}
 	}
 
 	void Driver::ExportAndSaveFrame(Simulation *simulation, std::uint32_t frame) const {
