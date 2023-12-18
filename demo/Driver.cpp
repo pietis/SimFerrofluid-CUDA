@@ -75,13 +75,10 @@ namespace Pivot {
 			auto const prediTime = (currentTime - beginTime) * elapsedRatio + (beginTime - initTime);
 			spdlog::info("Estimated total time: {}\n", DurationFormat(prediTime));
 			lastTime = currentTime;
+			StopWatch::PrintStats(m_Dirname / "statistics.txt");
 		}
-		{
-			std::ofstream fout(m_Dirname / "statistics.txt");
-			spdlog::info("Completed simulating! (elapsed time: {})", DurationFormat(lastTime - initTime));
-			fout << fmt::format("Total elpased time: {}", DurationFormat(lastTime - initTime)) << std::endl << std::endl;
-			StopWatch::PrintStats(fout);
-		}
+		spdlog::info("Completed simulating! (elapsed time: {})", DurationFormat(lastTime - initTime));
+		StopWatch::PrintStats();
 	}
 
 	void Driver::ExportAndSaveFrame(Simulation *simulation, std::uint32_t frame) const {
