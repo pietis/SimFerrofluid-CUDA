@@ -9,6 +9,7 @@ namespace Pivot {
 		std::uint32_t         EndFrame;
 		double                FrameRate     = 25;
 		double                CourantNumber = 1;
+		std::uint32_t		  SavingStride = 50;
 	};
 
 	class Driver {
@@ -27,6 +28,7 @@ namespace Pivot {
 		std::filesystem::path m_Dirname;
 		std::uint32_t         m_BeginFrame;
 		std::uint32_t         m_EndFrame;
+		std::uint32_t		  m_SavingStride;
 		double                m_SecondPerFrame;
 		double                m_CourantNumber;
 	};

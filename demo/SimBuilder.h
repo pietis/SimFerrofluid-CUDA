@@ -6,6 +6,7 @@ namespace Pivot {
 struct SimBuildOptions {
     Simulation::Scene Scene;
     int Scale;
+    bool EnableMag;
 };
 
 class SimBuilder {

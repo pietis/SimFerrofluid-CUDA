@@ -27,7 +27,8 @@ namespace Pivot {
 		m_BeginFrame { options.BeginFrame },
 		m_EndFrame { options.EndFrame },
 		m_SecondPerFrame { 1. / options.FrameRate },
-		m_CourantNumber { options.CourantNumber } {
+		m_CourantNumber { options.CourantNumber },
+		m_SavingStride { options.SavingStride } {
 	}
 
 	void Driver::Run(Simulation *simulation) const {
@@ -88,6 +89,7 @@ namespace Pivot {
 			std::filesystem::create_directory(frameDirname);
 			simulation->Export(frameDirname, frame == 0);
 		}
+		if((frame % m_SavingStride) == 0)
 		{ // Save the checkpoint
 			auto const filename = m_Dirname / "checkpoints" / fmt::format("{}.sav", frame);
 			std::ofstream fout(filename, std::ios::binary);

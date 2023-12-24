@@ -39,7 +39,10 @@ auto ParseArgs(int argc, char **argv) {
             cxxopts::value<int>()->default_value("-1"))(
             "r,rate", "Frame rate", cxxopts::value<double>())(
             "c,cfl", "Courant number",
-            cxxopts::value<double>()->default_value("1"))("h,help",
+            cxxopts::value<double>()->default_value("1"))(
+            "m,mag", "Enable magnetic")(
+            "d,stride", "Saving stride",
+            cxxopts::value<std::uint32_t>()->default_value("50"))("h,help",
                                                           "Print usage");
         auto result = argParser.parse(argc, argv);
         if (result.count("help")) {
@@ -52,10 +55,12 @@ auto ParseArgs(int argc, char **argv) {
             .EndFrame = result["end"].as<std::uint32_t>(),
             .FrameRate = result["rate"].as<double>(),
             .CourantNumber = result["cfl"].as<double>(),
+            .SavingStride = result["stride"].as<std::uint32_t>(),
         };
         Pivot::SimBuildOptions simOpt = {
             .Scene = ParseSceneName(result["test"].as<std::string>()),
             .Scale = result["scale"].as<int>(),
+            .EnableMag = result["mag"].as<bool>(),
         };
         return std::pair(driverOpt, simOpt);
     } catch (cxxopts::exceptions::exception const &e) {
