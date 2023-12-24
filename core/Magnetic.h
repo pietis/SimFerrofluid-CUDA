@@ -13,26 +13,27 @@ class Magnetic {
     friend class Simulation;
 
   public:
-    void Solve(SurfaceMesh &mesh, const std::function<Vector3d(const Vector3d&)>& fieldApplied) {
+    void Solve(SurfaceMesh &mesh, const std::function<Vector3d(const Vector3d&, double)>& fieldApplied, double time, double h) {
         m_Mesh = &mesh;
+        double eps = m_EpsFactor * h;
 
         fmt::print("meshsize {} ", mesh.size());
         auto sw = StopWatch("mag.");
-        InitSolver(fieldApplied);
+        InitSolver(fieldApplied, time);
         // SolveMagnetic();
         SolveMagneticFMM(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
                          m_Mesh->Areas.data(), m_Hext.data(),
                          m_MagneticPressure.data(), m_Mesh->size(),
-                         m_NumIteration, m_Lambda, m_Chi, m_EpsFPI);
+                         m_NumIteration, m_Lambda, m_Chi, eps);
         fmt::print("{:>8.3f}s ", sw.Stop());
     }
 
   private:
-    void InitSolver(const std::function<Vector3d(const Vector3d&)>& fieldApplied) {
+    void InitSolver(const std::function<Vector3d(const Vector3d&, double)>& fieldApplied, double time) {
         m_MagneticPressure.resize(m_Mesh->size());
         m_Hext.resize(m_Mesh->size());
         for (int i = 0; i < m_Mesh->size(); i++) {
-            m_Hext[i] = fieldApplied(m_Mesh->Positions[i]);
+            m_Hext[i] = fieldApplied(m_Mesh->Positions[i], time);
         }
     }
     //     void SolveMagnetic() {
@@ -137,7 +138,7 @@ class Magnetic {
     std::vector<Vector3d> m_Hext;
 
     int m_NumIteration = 10;
-    double m_EpsFPI = 1e-6;
+    double m_EpsFactor = 1.0;
     double m_StopThres = 1e-6;
 };
 } // namespace Pivot

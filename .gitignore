@@ -1,4 +1,7 @@
-build
+build*/
+*.lua
+*.ps1
+compile_commands.json
 
 .xmake
 .vs

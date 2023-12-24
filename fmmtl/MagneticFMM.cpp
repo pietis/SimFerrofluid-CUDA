@@ -38,7 +38,7 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     }
 
     kernel_type K(6);
-    K.epsilon = epsilon;
+    K.epsilon = epsilon * epsilon;
     fmmtl::kernel_matrix<kernel_type> A{K, points, points};
     FMMOptions opts;
     A.set_options(opts);
