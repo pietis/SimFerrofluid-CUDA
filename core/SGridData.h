@@ -31,6 +31,9 @@ namespace Pivot {
 
 		void SetConstant(Vector3<Type> const &value) { for (int axis = 0; axis < 3; axis++) m_Datas[axis].SetConstant(value[axis]); }
 		void SetZero    ()                           { SetConstant(Vector3<Type>::Zero()); }
+
+		void Save(std::ostream &out) const { for (int i = 0; i < 3; i++) m_Datas[i].Save(out); }
+		void Load(std::istream &in)        { for (int i = 0; i < 3; i++) m_Datas[i].Load(in); }
 		
 	private:
 		std::array<Grid, 3>           const &m_Grids;

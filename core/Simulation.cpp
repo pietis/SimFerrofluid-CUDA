@@ -115,9 +115,21 @@ namespace Pivot {
 	}
 
 	void Simulation::Save(std::ostream &out) const {
+		m_Velocity.Save(out);
+		m_LevelSet.Save(out);
+		IO::Write(out, m_InitVolume);
+		IO::Write(out, m_CumulVolError);
+		IO::Write(out, m_VolError);
 	}
 
 	void Simulation::Load(std::istream &in) {
+		m_Collider.Finish(m_SGrid);
+		
+		m_Velocity.Load(in);
+		m_LevelSet.Load(in);
+		IO::Read(in, m_InitVolume);
+		IO::Read(in, m_CumulVolError);
+		IO::Read(in, m_VolError);
 	}
 
 	void Simulation::Initialize() {
