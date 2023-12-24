@@ -127,7 +127,7 @@ namespace Pivot {
 		ReinitializeLevelSet(true);
 
 		if(m_MagneticEnabled){
-			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied);
+			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing());
 		}
 	}
 
@@ -171,7 +171,7 @@ namespace Pivot {
 
 	void Simulation::ProjectVelocity(double dt) {
 		if(m_MagneticEnabled){
-			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied);
+			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing());
 		}
 		m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
 			double pressure = 0;

@@ -28,8 +28,8 @@ struct LaplaceKernel
     Vec<3,double> dist = s - t;            //   Vector from target to source
     double R2 = norm_2_sq(dist);           //   R^2
     double invR2;                          //   1 / R^2
-    // invR2 = (R2 > epsilon)? 1.0 / R2 : 1.0 / epsilon;         //   Exclude self interaction
-    invR2 = (R2 > epsilon)? 1.0 / R2 : 0.0;         //   Exclude self interaction
+    invR2 = (R2 > epsilon)? 1.0 / R2 : 1.0 / epsilon;         //   Exclude self interaction
+    // invR2 = (R2 > epsilon)? 1.0 / R2 : 0.0;         //   Exclude self interaction
     double invR = std::sqrt(invR2);        //   Potential
     dist *= invR2 * invR;                  //   Force
     return kernel_value_type(invR, dist[0], dist[1], dist[2]);
