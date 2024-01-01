@@ -2,6 +2,7 @@
 
 #include "SGridData.h"
 #include "TriLerp.h"
+#include "TriCuInterp.h"
 
 namespace Pivot {
 	class Advection {
@@ -35,7 +36,8 @@ namespace Pivot {
 			GridData<Type> newGrData(grData.GetGrid());
 			ParallelForEach(grData.GetGrid(), [&](Vector3i const &coord) {
 				Vector3d const pos = grData.GetGrid().PositionOf(coord);
-				newGrData[coord] = TriLerp::Interpolate(grData, Trace<RkOrder>(pos, flow, -dt));
+				// newGrData[coord] = TriLerp::Interpolate(grData, Trace<RkOrder>(pos, flow, -dt));
+				newGrData[coord] = TriCuInterp::Interpolate(grData, Trace<RkOrder>(pos, flow, -dt));
 			});
 			grData = newGrData;
 		}

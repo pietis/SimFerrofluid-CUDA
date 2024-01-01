@@ -27,6 +27,10 @@ class Magnetic {
                          m_NumIteration, m_Lambda, m_Chi, eps);
         fmt::print("{:>8.3f}s ", sw.Stop());
     }
+    void SetChi(double chi){
+      m_Chi = chi;
+      m_Lambda = (-m_Chi) / (2 + m_Chi);
+    }
 
   private:
     void InitSolver(const std::function<Vector3d(const Vector3d&, double)>& fieldApplied, double time) {
