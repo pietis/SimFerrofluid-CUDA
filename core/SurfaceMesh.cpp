@@ -19,6 +19,18 @@ void SurfaceMesh::Export(std::ostream &out) const {
     IO::Write(out, Indices);
 }
 
+void SurfaceMesh::ExportOBJ(std::ostream &out) const {
+    for(int i =0; i < Positions.size(); i++){
+        out << "v " << Positions[i].x() << " " << Positions[i].y() << " " << Positions[i].z() << std::endl;
+    }
+    // for(int i =0; i < Normals.size(); i++){
+    //     out << "vn " << Normals[i].x() << " " << Normals[i].y() << " " << Normals[i].z() << std::endl;
+    // }
+    for(int i =0; i < Indices.size(); i+=3){
+        out << "f " << Indices[i] + 1 << " " << Indices[i+1] + 1 << " " << Indices[i+2] + 1 << std::endl;
+    }
+}
+
 void SurfaceMesh::ComputeNormals() {
     Normals.resize(Positions.size());
     std::fill(Normals.begin(), Normals.end(), Vector3d::Zero());

@@ -52,6 +52,7 @@ class Simulation {
     GridData<double> m_LevelSet;
     Contour m_Contour;
     Magnetic m_Magnetic;
+    std::shared_ptr<Magnetic> m_MagneticObject;
     std::function<Vector3d(const Vector3d&, double time)> m_FieldApplied;
 
     double m_InitVolume;

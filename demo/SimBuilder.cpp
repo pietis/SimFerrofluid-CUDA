@@ -2,6 +2,9 @@
 
 #include "CSG.h"
 
+#include "Reinitialization.h"
+#include "Contour.h"
+
 namespace Pivot {
 std::unique_ptr<Simulation> SimBuilder::Build(SimBuildOptions const &options) {
     std::unique_ptr<Simulation> simulation;
@@ -207,31 +210,43 @@ SimBuilder::BuildTmp(SimBuildOptions const &options) {
     sim->m_SurfaceTensionEnabled = true;
     sim->m_MagneticEnabled = options.EnableMag;
     sim->m_Damping = 8;
-    double HextFactor = 150;
+    double HextFactor = 14;
     Vector3d DPOrient = Vector3d(0, 1, 0);
-    Vector3d DPPos = Vector3d(0, - length * 1.5, 0);
+    Vector3d DPPos = Vector3d(0, - length * 0.5, 0);
     if(options.EnableMag){
         sim->m_FieldApplied = [HextFactor, DPOrient, DPPos, length](const Vector3d& pos, double time) -> Vector3d{
-            double timeFactor = 0;
-            time = (std::min)(0.12, time);
-            timeFactor = time / 0.12;
             Vector3d r = pos - DPPos;
-            // Vector3d r = pos - dppos;
             double rnorm = r.norm();
             Vector3d rUnit = r.normalized();
             double cosTheta = r.dot(DPOrient) / rnorm;
-            Vector3d Hr = timeFactor * HextFactor * rUnit * 2 * cosTheta / (rnorm * rnorm * rnorm);
+            Vector3d Hr = HextFactor * rUnit * 2 * cosTheta / (rnorm * rnorm * rnorm);
             if( (1 - cosTheta) < 1e-6 ){
                 return Hr;
             }else{
                 double sinTheta = sqrt(1 - cosTheta * cosTheta);
                 Vector3d thetaUnit = DPOrient.dot(rUnit) * rUnit - DPOrient;
-                Vector3d Htheta = timeFactor * HextFactor * thetaUnit * sinTheta / (rnorm * rnorm * rnorm);
+                Vector3d Htheta = HextFactor * thetaUnit * sinTheta / (rnorm * rnorm * rnorm);
                 return Hr + Htheta;
             }
         };
+
+        GridData<double> tmpLevelSet(sgrid.GetCellGrid(), std::numeric_limits<double>::infinity());
+        CSG::Union(tmpLevelSet, ImplicitSphere(-0.3 * length * Vector3d::Unit(1), length * .3));
+        CSG::Except(tmpLevelSet, ImplicitPlane(sgrid.GetDomainOrigin()(1)*Vector3d::Unit(1), Vector3d::Unit(1)));
+        FastMarching::Solve(tmpLevelSet, -1);
+        Contour contour(sgrid.GetCellGrid());
+        contour.Generate(tmpLevelSet);
+        contour.ComputeVertexInfosFromLS(tmpLevelSet);
+        sim->m_MagneticObject = std::make_shared<Magnetic>();
+        sim->m_MagneticObject->SetChi(1.5);
+        sim->m_MagneticObject->SetIteration(20);
+        sim->m_MagneticObject->Cache(contour.GetMesh(), sim->m_FieldApplied, 0, sim->m_LevelSet.GetGrid().GetSpacing());
     }
-    CSG::Union(sim->m_LevelSet, ImplicitEllipsoid(-0.2 * length * Vector3d::Unit(1), Vector3d(.4, .4, .4) * length));
+    
+    CSG::Union(sim->m_Collider.LevelSet, ImplicitSphere(-0.3 * length * Vector3d::Unit(1), length * .3));
+    CSG::Union(sim->m_LevelSet, ImplicitPlane(sgrid.GetDomainOrigin() +
+                                    Vector3d::Unit(1) * length * .12,
+                                    Vector3d::Unit(1)));
     return sim;
 }
 

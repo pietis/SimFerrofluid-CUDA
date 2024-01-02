@@ -13,35 +13,85 @@ class Magnetic {
     friend class Simulation;
 
   public:
-    void Solve(SurfaceMesh &mesh, const std::function<Vector3d(const Vector3d&, double)>& fieldApplied, double time, double h) {
-        m_Mesh = &mesh;
-        double eps = m_EpsFactor * h;
+    void
+    Solve(SurfaceMesh &mesh,
+          const std::function<Vector3d(const Vector3d &, double)> &fieldApplied,
+          double time, double h,
+          std::shared_ptr<Magnetic> magneticObject = nullptr) {
+        m_Mesh = mesh;
+        m_Eps = m_EpsFactor * h;
 
         fmt::print("meshsize {} ", mesh.size());
         auto sw = StopWatch("mag.");
-        InitSolver(fieldApplied, time);
-        SolveMagneticFMM(m_Mesh->Positions.data(), m_Mesh->Normals.data(),
-                         m_Mesh->Areas.data(), m_Hext.data(),
-                         m_MagneticPressure.data(), m_Mesh->size(),
-                         m_NumIteration, m_Lambda, m_Chi, eps);
+        InitSolver(fieldApplied, time, magneticObject);
+        SolveMagneticFMM(m_Mesh.Positions.data(), m_Mesh.Normals.data(),
+                         m_Mesh.Areas.data(), m_Hext.data(),
+                         m_MagneticPressure.data(), m_Mesh.size(),
+                         m_NumIteration, m_Lambda, m_Chi, m_Eps);
         fmt::print("{:>8.3f}s ", sw.Stop());
     }
-    void SetChi(double chi){
-      m_Chi = chi;
-      m_Lambda = (-m_Chi) / (2 + m_Chi);
+    void
+    Cache(SurfaceMesh &mesh,
+          const std::function<Vector3d(const Vector3d &, double)> &fieldApplied,
+          double time, double h) {
+        m_Mesh = mesh;
+        m_Eps = m_EpsFactor * h;
+
+        fmt::print("[cache] meshsize {} ", mesh.size());
+        auto sw = StopWatch("mcache.");
+        InitCache(fieldApplied, time);
+        CacheMagneticFMM(m_Mesh.Positions.data(), m_Mesh.Normals.data(),
+                         m_Mesh.Areas.data(), m_Hext.data(), m_Charges.data(),
+                         m_Mesh.size(), m_NumIteration, m_Lambda, m_Chi,
+                         m_Eps);
+        fmt::print("{:>8.3f}s\n", sw.Stop());
+    }
+    void SetChi(double chi) {
+        m_Chi = chi;
+        m_Lambda = (-m_Chi) / (2 + m_Chi);
+    }
+    void SetIteration(int iter) { m_NumIteration = iter; }
+
+  private:
+    void InitSolver(
+        const std::function<Vector3d(const Vector3d &, double)> &fieldApplied,
+        double time, std::shared_ptr<Magnetic> magneticObject) {
+        m_MagneticPressure.resize(m_Mesh.size());
+        m_Hext.resize(m_Mesh.size());
+        for (int i = 0; i < m_Mesh.size(); i++) {
+            m_Hext[i] = fieldApplied(m_Mesh.Positions[i], time);
+        }
+        if (magneticObject != nullptr) {
+            std::vector<Vector3d> Hind(m_Mesh.size());
+            magneticObject->ApplyCache(m_Mesh.Positions, Hind);
+            for (int i = 0; i < m_Mesh.size(); i++) {
+                m_Hext[i] = m_Hext[i] + Hind[i];
+            }
+        }
+    }
+    void ApplyCache(std::vector<Vector3d> &targets,
+                    std::vector<Vector3d> &Hind) {
+        Hind.resize(targets.size());
+        fmt::print("[cache app] ");
+        auto sw = StopWatch("mcacheapp.");
+        ApplyCacheFMM(m_Mesh.Positions.data(), targets.data(), m_Mesh.size(),
+                      targets.size(), m_Eps, m_Charges, Hind.data());
+        fmt::print("{:>8.3f}s ", sw.Stop());
+    }
+    void InitCache(
+        const std::function<Vector3d(const Vector3d &, double)> &fieldApplied,
+        double time) {
+        m_Charges.resize(m_Mesh.size());
+        m_Hext.resize(m_Mesh.size());
+        for (int i = 0; i < m_Mesh.size(); i++) {
+            m_Hext[i] = fieldApplied(m_Mesh.Positions[i], time);
+        }
     }
 
   private:
-    void InitSolver(const std::function<Vector3d(const Vector3d&, double)>& fieldApplied, double time) {
-        m_MagneticPressure.resize(m_Mesh->size());
-        m_Hext.resize(m_Mesh->size());
-        for (int i = 0; i < m_Mesh->size(); i++) {
-            m_Hext[i] = fieldApplied(m_Mesh->Positions[i], time);
-        }
-    }
-  private:
-    SurfaceMesh *m_Mesh;
+    SurfaceMesh m_Mesh;
     std::vector<double> m_MagneticPressure;
+    std::vector<double> m_Charges;
 
     double m_Chi = 0.33;
     double m_Lambda = (-m_Chi) / (2 + m_Chi);
@@ -49,6 +99,7 @@ class Magnetic {
 
     int m_NumIteration = 10;
     double m_EpsFactor = 1.0;
+    double m_Eps;
     double m_StopThres = 1e-6;
 };
 } // namespace Pivot

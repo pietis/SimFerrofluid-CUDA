@@ -14,6 +14,7 @@ namespace Pivot {
 
 		void Clear();
 		void Export(std::ostream &out) const;
+		void ExportOBJ(std::ostream &out) const;
 
 		void ComputeNormals();
 		void ComputeAreas();
