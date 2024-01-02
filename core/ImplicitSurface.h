@@ -87,11 +87,11 @@ namespace Pivot {
 
 		ImplicitEllipsoid(Vector3d const &center, Vector3d const &semiAxels) : m_Center(center), m_SemiAxels(semiAxels) { }
 
-		virtual Vector3d ClosestPositionOf(Vector3d const &pos) const override { return pos / pos.cwiseQuotient(m_SemiAxels).norm(); } // not accurate solution
-		virtual Vector3d ClosestNormalOf  (Vector3d const &pos) const override { return (pos - ClosestPositionOf(pos)).normalized() * (Surrounds(pos) ? -1 : 1); }
-		virtual double   DistanceTo       (Vector3d const &pos) const override { return (pos - ClosestPositionOf(pos)).norm(); }
-		virtual double   SignedDistanceTo (Vector3d const &pos) const override { return DistanceTo(pos) * (Surrounds(pos) ? -1 : 1); }
-		virtual bool     Surrounds        (Vector3d const &pos) const override { return pos.cwiseQuotient(m_SemiAxels).squaredNorm() <= 1; }
+		virtual Vector3d ClosestPositionOf(Vector3d const &pos) const override { auto pos_ = pos - m_Center; return pos_ / pos_.cwiseQuotient(m_SemiAxels).norm(); } // not accurate solution
+		virtual Vector3d ClosestNormalOf  (Vector3d const &pos) const override { auto pos_ = pos - m_Center; return (pos_ - ClosestPositionOf(pos_)).normalized() * (Surrounds(pos) ? -1 : 1); }
+		virtual double   DistanceTo       (Vector3d const &pos) const override { auto pos_ = pos - m_Center; return (pos_ - ClosestPositionOf(pos_)).norm(); }
+		virtual double   SignedDistanceTo (Vector3d const &pos) const override { auto pos_ = pos - m_Center; return DistanceTo(pos_) * (Surrounds(pos_) ? -1 : 1); }
+		virtual bool     Surrounds        (Vector3d const &pos) const override { auto pos_ = pos - m_Center; return pos_.cwiseQuotient(m_SemiAxels).squaredNorm() <= 1; }
 
 	private:
 		Vector3d m_Center;

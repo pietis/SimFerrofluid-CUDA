@@ -30,5 +30,7 @@ class SimBuilder {
     BuildDipole(SimBuildOptions const &options);
     static std::unique_ptr<Simulation>
     BuildPattern(SimBuildOptions const &options);
+    static std::unique_ptr<Simulation>
+    BuildTmp(SimBuildOptions const &options);
 };
 } // namespace Pivot

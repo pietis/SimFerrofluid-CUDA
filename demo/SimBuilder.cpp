@@ -30,6 +30,9 @@ std::unique_ptr<Simulation> SimBuilder::Build(SimBuildOptions const &options) {
     case Simulation::Scene::Pattern:
         simulation = BuildPattern(options);
         break;
+    case Simulation::Scene::Tmp:
+        simulation = BuildTmp(options);
+        break;
     }
     simulation->m_Scene = options.Scene;
     return simulation;
@@ -194,6 +197,45 @@ SimBuilder::BuildDipole(SimBuildOptions const &options) {
 }
 
 std::unique_ptr<Simulation>
+SimBuilder::BuildTmp(SimBuildOptions const &options) {
+    constexpr double length = .12;
+    constexpr int bw = 2;
+    int const scale = options.Scale < 0 ? 64 : options.Scale;
+    StaggeredGrid sgrid(2, length / (scale - bw * 2),
+                        Vector3i(4, 3, 4) * scale / 4);
+    auto sim = std::make_unique<Simulation>(sgrid);
+    sim->m_SurfaceTensionEnabled = true;
+    sim->m_MagneticEnabled = options.EnableMag;
+    sim->m_Damping = 8;
+    double HextFactor = 150;
+    Vector3d DPOrient = Vector3d(0, 1, 0);
+    Vector3d DPPos = Vector3d(0, - length * 1.5, 0);
+    if(options.EnableMag){
+        sim->m_FieldApplied = [HextFactor, DPOrient, DPPos, length](const Vector3d& pos, double time) -> Vector3d{
+            double timeFactor = 0;
+            time = (std::min)(0.12, time);
+            timeFactor = time / 0.12;
+            Vector3d r = pos - DPPos;
+            // Vector3d r = pos - dppos;
+            double rnorm = r.norm();
+            Vector3d rUnit = r.normalized();
+            double cosTheta = r.dot(DPOrient) / rnorm;
+            Vector3d Hr = timeFactor * HextFactor * rUnit * 2 * cosTheta / (rnorm * rnorm * rnorm);
+            if( (1 - cosTheta) < 1e-6 ){
+                return Hr;
+            }else{
+                double sinTheta = sqrt(1 - cosTheta * cosTheta);
+                Vector3d thetaUnit = DPOrient.dot(rUnit) * rUnit - DPOrient;
+                Vector3d Htheta = timeFactor * HextFactor * thetaUnit * sinTheta / (rnorm * rnorm * rnorm);
+                return Hr + Htheta;
+            }
+        };
+    }
+    CSG::Union(sim->m_LevelSet, ImplicitEllipsoid(-0.2 * length * Vector3d::Unit(1), Vector3d(.4, .4, .4) * length));
+    return sim;
+}
+
+std::unique_ptr<Simulation>
 SimBuilder::BuildPattern(SimBuildOptions const &options) {
     constexpr double length = .12;
     constexpr int bw = 2;
@@ -209,23 +251,18 @@ SimBuilder::BuildPattern(SimBuildOptions const &options) {
     sim->m_Damping = 8;
     sim->m_Magnetic.SetChi(0.8);
     Vector3d Hext0 = Vector3d(0, 4e4, 0);
-    Vector3d Hext1 = Vector3d(0, 6e4, 0);
+    Vector3d Hext1 = Vector3d(0, 5e4, 0);
 
     if(options.EnableMag){
-        // sim->m_FieldApplied = [Hext](const Vector3d& pos, double time) -> Vector3d{
-        //     return Hext;
-        // };
         sim->m_FieldApplied = [Hext0, Hext1](const Vector3d& pos, double time) -> Vector3d{
-            
             double timeFactor = 0;
-            time = (std::min)(0.06, time);
-            timeFactor = time / 0.06;
+            time = (std::min)(0.04, time);
+            timeFactor = time / 0.04;
             return Hext0 + (Hext1 - Hext0) * timeFactor;
         };
     }
-    // CSG::Union(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.02,
-                                    // Vector3d(0, 1, 0), 0.15 * length, 0.02 * length));
-    CSG::Union(sim->m_LevelSet, ImplicitPlane(Vector3d(0, 0, 0), Vector3d(0, 1, 0)));
+    CSG::Union(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.005,
+                                    Vector3d(0, 1, 0), 0.32 * length, 0.005 * length));
     return sim;
 }
 } // namespace Pivot
