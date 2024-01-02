@@ -199,7 +199,7 @@ namespace Pivot {
 				int index =
 					m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
 				if(index >= 0){
-					pressure += m_Magnetic.m_MagneticPressure[index] /
+					pressure -= m_Magnetic.m_MagneticPressure[index] /
 								m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
 				}
 			}

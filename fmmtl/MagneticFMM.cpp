@@ -25,10 +25,6 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     const double *Hext_ = (const double *)Hext;
     double *pressures_ = (double *)pressures;
 
-    // std::random_device rdevice;
-    // std::default_random_engine rand_engine(rdevice());
-    // std::uniform_real_distribution<double> noise(-epsilon, epsilon);
-
     std::vector<source_type> points(size);
 
     for (int i = 0; i < size; i++) {
@@ -49,10 +45,10 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     std::vector<charge_type> charges(size);
 
     for (int i = 0; i < size; i++) {
-        b[i] =
-            -2 * lambda *
-            (Hext_[i * 3 + 0] * normals_[i * 3 + 0] + Hext_[i * 3 + 1] * normals_[i * 3 + 1] +
-             Hext_[i * 3 + 2] * normals_[i * 3 + 2]);
+        b[i] = -2 * lambda *
+               (Hext_[i * 3 + 0] * normals_[i * 3 + 0] +
+                Hext_[i * 3 + 1] * normals_[i * 3 + 1] +
+                Hext_[i * 3 + 2] * normals_[i * 3 + 2]);
         u[i] = b[i];
     }
 
@@ -82,55 +78,31 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     force = A * charges;
     for (int i = 0; i < size; i++) {
         double Hn = 1 / chi * u[i];
-        double Hn_ = Hn * (1 + chi);
 
         double nx[3];
         nx[0] = normals_[i * 3 + 0];
         nx[1] = normals_[i * 3 + 1];
         nx[2] = normals_[i * 3 + 2];
-        double tx1[3];
-        double tx2[3];
+        double Ht[3];
+        double Hextn = Hext_[i * 3 + 0] * nx[0] + Hext_[i * 3 + 1] * nx[1] +
+                       Hext_[i * 3 + 2] * nx[2];
+        Ht[0] = Hext_[i * 3 + 0] - Hextn * nx[0];
+        Ht[1] = Hext_[i * 3 + 1] - Hextn * nx[1];
+        Ht[2] = Hext_[i * 3 + 2] - Hextn * nx[2];
+        double coef = 1.0 / (4 * m_PI);
+        double Dn =
+            force[i][1] * nx[0] + force[i][2] * nx[1] + force[i][3] * nx[2];
+        
+        Ht[0] += -coef * (force[i][1] - nx[0] * Dn);
+        Ht[1] += -coef * (force[i][2] - nx[1] * Dn);
+        Ht[2] += -coef * (force[i][3] - nx[2] * Dn);
 
-        double x, y, z, rn;
-        if (abs(nx[0]) > 0.1) {
-            x = -nx[2];
-            y = 0;
-            z = nx[0];
-        } else {
-            x = 0;
-            y = nx[2];
-            z = -nx[1];
-        }
-        rn = sqrt(x * x + y * y + z * z);
-        tx1[0] = x / rn;
-        tx1[1] = y / rn;
-        tx1[2] = z / rn;
+        double HtSquared = Ht[0] * Ht[0] + Ht[1] * Ht[1] + Ht[2] * Ht[2];
+        double H2 = Hn * Hn + HtSquared;
 
-        x = nx[1] * tx1[2] - nx[2] * tx1[1];
-        y = nx[2] * tx1[0] - nx[0] * tx1[2];
-        z = nx[0] * tx1[1] - nx[1] * tx1[0];
+        double pressure;
 
-        rn = sqrt(x * x + y * y + z * z);
-        tx2[0] = x / rn;
-        tx2[1] = y / rn;
-        tx2[2] = z / rn;
-
-        double Ht1 = Hext_[i * 3 + 0] * tx1[0] + Hext_[i * 3 + 1] * tx1[1] + Hext_[i * 3 + 2] * tx1[2];
-        double Ht2 = Hext_[i * 3 + 0] * tx2[0] + Hext_[i * 3 + 1] * tx2[1] + Hext_[i * 3 + 2] * tx2[2];
-
-        Ht1 += -1 / (4 * m_PI) *
-               (force[i][1] * tx1[0] + force[i][2] * tx1[1] +
-                force[i][3] * tx1[2]);
-        Ht2 += -1 / (4 * m_PI) *
-               (force[i][1] * tx2[0] + force[i][2] * tx2[1] +
-                force[i][3] * tx2[2]);
-
-        double HtSquared = Ht1 * Ht1 + Ht2 * Ht2;
-
-        double pressure = 0;
-
-        pressure += m_MU * (1 + chi) * 0.5 * (Hn * Hn - HtSquared);
-        pressure -= m_MU * 0.5 * (Hn_ * Hn_ - HtSquared);
+        pressure = 0.5 * m_MU * (chi * H2 + Hn * Hn * chi * chi);
         pressures_[i] = pressure;
     }
 };
