@@ -27,6 +27,7 @@ void SolvePotential(const void *positions, const void *normals,
 
     std::vector<source_type> points(size);
 
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
         points[i][0] = positions_[i * 3 + 0];
         points[i][1] = positions_[i * 3 + 1];
@@ -42,6 +43,7 @@ void SolvePotential(const void *positions, const void *normals,
     std::vector<double> b(size);
     std::vector<charge_type> charges(size);
 
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
         b[i] = -2 * lambda *
                (Hext_[i * 3 + 0] * normals_[i * 3 + 0] +
@@ -50,6 +52,7 @@ void SolvePotential(const void *positions, const void *normals,
         u[i] = b[i] / (1 + lambda);
     }
 
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
         charges[i] = areas_[i] * u[i];
     }
@@ -59,6 +62,7 @@ void SolvePotential(const void *positions, const void *normals,
         force = A * charges;
 
         residual = 0;
+#pragma omp parallel for
         for (int i = 0; i < size; i++) {
             double tmp = b[i] + 2 * lambda / (4 * m_PI) *
                                     (force[i][1] * normals_[i * 3 + 0] +
@@ -89,6 +93,7 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     SolvePotential(positions, normals, areas, Hext, size, num_iter, lambda,
                    epsilon, force, u);
 
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
         double Hn = 1 / chi * u[i];
 
@@ -134,6 +139,7 @@ void CacheMagneticFMM(const void *positions, const void *normals,
 
     SolvePotential(positions, normals, areas, Hext, size, num_iter, lambda,
                    epsilon, force, u);
+#pragma omp parallel for
     for (int i = 0; i < size; i++) {
         charges_[i] = areas_[i] * u[i];
     }
@@ -150,12 +156,14 @@ void ApplyCacheFMM(const void *sources, const void *targets,
     std::vector<source_type> source_points(source_size);
     std::vector<source_type> target_points(target_size);
 
+#pragma omp parallel for
     for (int i = 0; i < source_size; i++) {
         source_points[i][0] = sources_[i * 3 + 0];
         source_points[i][1] = sources_[i * 3 + 1];
         source_points[i][2] = sources_[i * 3 + 2];
     }
 
+#pragma omp parallel for
     for (int i = 0; i < target_size; i++) {
         target_points[i][0] = targets_[i * 3 + 0];
         target_points[i][1] = targets_[i * 3 + 1];
@@ -173,6 +181,7 @@ void ApplyCacheFMM(const void *sources, const void *targets,
     force = A * charges;
 
     double coef = -1.0 / (4 * m_PI);
+#pragma omp parallel for
     for (int i = 0; i < target_size; i++) {
         Hind_[i * 3 + 0] = coef * force[i][1];
         Hind_[i * 3 + 1] = coef * force[i][2];
