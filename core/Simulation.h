@@ -69,5 +69,7 @@ class Simulation {
     bool m_SurfaceTensionEnabled = false;
     bool m_SemiImplicitSTEnabled = false;
     bool m_MagneticEnabled = false;
+
+    int m_MaxMeshSize = 0;
 };
 } // namespace Pivot

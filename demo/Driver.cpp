@@ -96,6 +96,7 @@ namespace Pivot {
 			auto const filename = m_Dirname / "checkpoints" / fmt::format("{}.sav", frame);
 			std::ofstream fout(filename, std::ios::binary);
 			simulation->Save(fout);
+			StopWatch::Save(fout);
 		}
 		{ // Write the frame count
 			std::ofstream fout(m_Dirname / "frame_count.txt");
@@ -112,6 +113,7 @@ namespace Pivot {
 		}
 		std::ifstream fin(filename, std::ios::binary);
 		simulation->Load(fin);
+		StopWatch::Load(fin);
 	}
 
 	void Driver::DescribeScene(Simulation *simulation) const {

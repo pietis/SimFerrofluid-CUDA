@@ -120,6 +120,7 @@ namespace Pivot {
 		IO::Write(out, m_InitVolume);
 		IO::Write(out, m_CumulVolError);
 		IO::Write(out, m_VolError);
+		IO::Write(out, m_MaxMeshSize);
 	}
 
 	void Simulation::Load(std::istream &in) {
@@ -130,6 +131,7 @@ namespace Pivot {
 		IO::Read(in, m_InitVolume);
 		IO::Read(in, m_CumulVolError);
 		IO::Read(in, m_VolError);
+		IO::Read(in, m_MaxMeshSize);
 	}
 
 	void Simulation::Initialize() {
@@ -256,5 +258,9 @@ namespace Pivot {
 			m_InitVolume = m_CurrentVolume;
 		}
 		fmt::print("volume {:.3e}/{:.3e} ", m_CurrentVolume, m_InitVolume);
+
+		m_MaxMeshSize = std::max(m_MaxMeshSize, m_Contour.GetMesh().size());
+
+		fmt::print("max size {} ", m_MaxMeshSize);
 	}
 }

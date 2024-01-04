@@ -32,6 +32,9 @@ namespace Pivot {
 		static void PrintStats();
 		static void PrintStats(std::filesystem::path const &filename);
 
+		static void Save(std::ostream &out);
+		static void Load(std::istream &in);
+
 	private:
 		std::string m_Name;
 		Clock::time_point m_BeginTime;
