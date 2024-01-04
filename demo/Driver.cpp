@@ -39,6 +39,7 @@ namespace Pivot {
 			fmt::print(fmt::fg(fmt::color::yellow_green), "[Initialize] ");
 			{ // Initialize simulation
 				auto sw = StopWatch("init.");
+				simulation->CacheMagneticObject();
 				simulation->Initialize();
 				fmt::print("    ... {:>8.3f}s used\n", sw.Stop());
 			}
@@ -64,6 +65,7 @@ namespace Pivot {
 		for (auto frame = beginFrame; frame < m_EndFrame; frame++) {
 			// Simulate
 			spdlog::info("Start to simulate Frame {}", frame);
+			// simulation->CacheMagneticObject();
 			AdvanceTimeBySteps(simulation, frame);
 			// Export and save files for the frame
 			ExportAndSaveFrame(simulation, frame);

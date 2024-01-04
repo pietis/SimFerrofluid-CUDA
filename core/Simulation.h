@@ -27,6 +27,7 @@ class Simulation {
 
     void AdvectFields(double dt);
     void ApplyBodyForces(double dt);
+    void CacheMagneticObject();
     void ProjectVelocity(double dt);
     void ApplySemiImplicitST(double dt);
     void ComputeVolumeError(double dt);

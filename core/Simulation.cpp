@@ -181,6 +181,12 @@ namespace Pivot {
 		m_VolError = 1 / (x + 1) * (-kp * x - ki * m_CumulVolError) * m_SGrid.GetSpacing();
 	}
 
+	void Simulation::CacheMagneticObject(){
+		if(m_MagneticEnabled && (m_MagneticObject != nullptr)){
+			m_MagneticObject->Cache(m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing());
+		}
+	}
+
 	void Simulation::ProjectVelocity(double dt) {
 		if(m_MagneticEnabled){
 			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing(), m_MagneticObject);

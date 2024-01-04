@@ -209,25 +209,14 @@ SimBuilder::BuildTmp(SimBuildOptions const &options) {
     auto sim = std::make_unique<Simulation>(sgrid);
     sim->m_SurfaceTensionEnabled = true;
     sim->m_MagneticEnabled = options.EnableMag;
+    sim->m_Magnetic.SetChi(0.6);
     sim->m_Damping = 8;
-    double HextFactor = 14;
+    Vector3d Hext = Vector3d(0, 1.8e4, 0);
     Vector3d DPOrient = Vector3d(0, 1, 0);
-    Vector3d DPPos = Vector3d(0, - length * 0.5, 0);
+    Vector3d DPPos = Vector3d(0, - length * 0.8, 0);
     if(options.EnableMag){
-        sim->m_FieldApplied = [HextFactor, DPOrient, DPPos, length](const Vector3d& pos, double time) -> Vector3d{
-            Vector3d r = pos - DPPos;
-            double rnorm = r.norm();
-            Vector3d rUnit = r.normalized();
-            double cosTheta = r.dot(DPOrient) / rnorm;
-            Vector3d Hr = HextFactor * rUnit * 2 * cosTheta / (rnorm * rnorm * rnorm);
-            if( (1 - cosTheta) < 1e-6 ){
-                return Hr;
-            }else{
-                double sinTheta = sqrt(1 - cosTheta * cosTheta);
-                Vector3d thetaUnit = DPOrient.dot(rUnit) * rUnit - DPOrient;
-                Vector3d Htheta = HextFactor * thetaUnit * sinTheta / (rnorm * rnorm * rnorm);
-                return Hr + Htheta;
-            }
+        sim->m_FieldApplied = [Hext](const Vector3d& pos, double time) -> Vector3d{
+            return Hext;
         };
 
         GridData<double> tmpLevelSet(sgrid.GetCellGrid(), std::numeric_limits<double>::infinity());
@@ -238,9 +227,9 @@ SimBuilder::BuildTmp(SimBuildOptions const &options) {
         contour.Generate(tmpLevelSet);
         contour.ComputeVertexInfosFromLS(tmpLevelSet);
         sim->m_MagneticObject = std::make_shared<Magnetic>();
-        sim->m_MagneticObject->SetChi(1.5);
-        sim->m_MagneticObject->SetIteration(20);
-        sim->m_MagneticObject->Cache(contour.GetMesh(), sim->m_FieldApplied, 0, sim->m_LevelSet.GetGrid().GetSpacing());
+        sim->m_MagneticObject->SetChi(5000);
+        sim->m_MagneticObject->SetIteration(100);
+        sim->m_MagneticObject->AssignMesh(contour.GetMesh());
     }
     
     CSG::Union(sim->m_Collider.LevelSet, ImplicitSphere(-0.3 * length * Vector3d::Unit(1), length * .3));
@@ -252,7 +241,7 @@ SimBuilder::BuildTmp(SimBuildOptions const &options) {
 
 std::unique_ptr<Simulation>
 SimBuilder::BuildPattern(SimBuildOptions const &options) {
-    constexpr double length = .12;
+    constexpr double length = .24;
     constexpr int bw = 2;
     int const scale = options.Scale < 0 ? 64 : options.Scale;
     int thickness = ceil(0.02 * scale) + bw * 2 ;

@@ -47,7 +47,7 @@ void SolvePotential(const void *positions, const void *normals,
                (Hext_[i * 3 + 0] * normals_[i * 3 + 0] +
                 Hext_[i * 3 + 1] * normals_[i * 3 + 1] +
                 Hext_[i * 3 + 2] * normals_[i * 3 + 2]);
-        u[i] = b[i];
+        u[i] = b[i] / (1 + lambda);
     }
 
     for (int i = 0; i < size; i++) {
