@@ -86,7 +86,7 @@ namespace Pivot {
 			ConjugateGradient<SparseMatrix<double>, Eigen::Lower | Eigen::Upper, IncompleteCholesky<double>> solver(matLaplacian);
 			solver.setTolerance(std::max(1e-5, std::numeric_limits<double>::epsilon() / rhs.norm()));
 			vel = solver.solveWithGuess(rhs, vel);
-			std::cout << std::format("{:>6} iters", solver.iterations());
+			std::cout << fmt::format("{:>6} iters", solver.iterations());
 		}
 		
 		for (int r = 0; r < n; r++) {
