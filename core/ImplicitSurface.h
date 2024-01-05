@@ -39,6 +39,46 @@ namespace Pivot {
 		double   m_RoundRadius;
 	};
 
+	class ImplicitScrew : public Surface {
+	public:
+		ImplicitScrew (Vector3d const &center, double height1, double height2, double r1, double r2, double angle, double k) : m_Center { center }, m_Height1 { height1 }, m_Height2 { height2 }, m_R1 { r1 }, m_R2 { r2 }, m_Angle { angle }, m_K { k } { }
+		// TODO
+		virtual Vector3d ClosestNormalOf  (Vector3d const &pos) const override { return Vector3d::Zero(); }
+		virtual double SignedDistanceTo(Vector3d const &pos) const override {
+			Vector3d dpos = pos - m_Center;
+			double cone_factor = (std::min)(1.0, abs(dpos.y()) / m_Height2);
+			double c = cos(m_K * dpos.y());
+			double s = sin(m_K * dpos.y());
+			Matrix2d mat = (Matrix2d() << c, -s, s, c).finished();
+			Vector2d pos2d = mat * Vector2d(dpos.x(), dpos.z());
+			Vector3d tdpos(pos2d.x(), dpos.y(), pos2d.y());
+
+			Vector2d C(sin(m_Angle), cos(m_Angle));
+			pos2d.x() = abs(pos2d.x());
+			double l = pos2d.norm() - m_R1 * cone_factor;
+			double m = (pos2d - C * (std::min)((std::max)(pos2d.dot(C), 0.0), m_R1 * cone_factor)).norm();
+			m *= (C.y() * pos2d.x() - C.x()* pos2d.y() < 0) ? -1 : 1;
+			double d1 = (std::max)(l, m);
+
+			double d2 = pos2d.norm() - m_R1 * cone_factor;
+			double d3 = pos2d.norm() - m_R2 * cone_factor;
+			double d = (std::min)((std::max)(d2, -d1), d3);
+
+			Vector2d w(d, abs(dpos.y()) - m_Height2);
+			double discrew = (std::min)((std::max)(w.x(), w.y()), 0.0) + (w.cwiseMax(0)).norm();
+			return (std::max)(dpos.y() + m_Height1, discrew);
+		}
+
+	private:
+		Vector3d m_Center;
+		double m_Height1;
+		double m_Height2;
+		double m_Angle;
+		double m_K;
+		double m_R1;
+		double m_R2;
+	};
+	
 	class ImplicitBox : public Surface {
 	public:
 		ImplicitBox(Vector3d const &minCorner, Vector3d const &lengths) : m_Center { minCorner + lengths / 2 }, m_HalfLengths { lengths / 2 } { }
