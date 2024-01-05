@@ -15,6 +15,7 @@ Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
             {"plane", Simulation::Scene::Plane},
             {"dipole", Simulation::Scene::Dipole},
             {"pattern", Simulation::Scene::Pattern},
+            {"magsphere", Simulation::Scene::MagSphere},
             {"tmp", Simulation::Scene::Tmp},
         };
     if (auto iter = s_SceneFromName.find(name.data());

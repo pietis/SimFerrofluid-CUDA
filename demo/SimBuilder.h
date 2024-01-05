@@ -32,5 +32,7 @@ class SimBuilder {
     BuildPattern(SimBuildOptions const &options);
     static std::unique_ptr<Simulation>
     BuildTmp(SimBuildOptions const &options);
+    static std::unique_ptr<Simulation>
+    BuildMagSphere(SimBuildOptions const &options);
 };
 } // namespace Pivot
