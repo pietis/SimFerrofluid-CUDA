@@ -19,7 +19,7 @@ void SolvePotential(const void *positions, const void *normals,
                     const void *areas, const void *Hext, const int size,
                     const int num_iter, const double lambda,
                     const double epsilon, std::vector<result_type> &force,
-                    std::vector<double> &u) {
+                    std::vector<double> &u, bool trunc = false) {
     const double *positions_ = (const double *)positions;
     const double *normals_ = (const double *)normals;
     const double *areas_ = (const double *)areas;
@@ -36,6 +36,7 @@ void SolvePotential(const void *positions, const void *normals,
 
     kernel_type K(6);
     K.epsilon = epsilon * epsilon;
+    K.clamp_value = trunc ? 0 : 1.0 / K.epsilon;
     fmmtl::kernel_matrix<kernel_type> A{K, points, points};
     FMMOptions opts;
     A.set_options(opts);
@@ -82,7 +83,7 @@ void SolvePotential(const void *positions, const void *normals,
 void SolveMagneticFMM(const void *positions, const void *normals,
                       const void *areas, const void *Hext, void *pressures,
                       const int size, const int num_iter, const double lambda,
-                      const double chi, const double epsilon) {
+                      const double chi, const double epsilon, bool trunc) {
     const double *normals_ = (const double *)normals;
     const double *Hext_ = (const double *)Hext;
     double *pressures_ = (double *)pressures;
@@ -91,7 +92,7 @@ void SolveMagneticFMM(const void *positions, const void *normals,
     std::vector<double> u(size);
 
     SolvePotential(positions, normals, areas, Hext, size, num_iter, lambda,
-                   epsilon, force, u);
+                   epsilon, force, u, trunc);
 
 #pragma omp parallel for
     for (int i = 0; i < size; i++) {

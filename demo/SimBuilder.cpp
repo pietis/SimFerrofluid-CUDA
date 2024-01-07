@@ -148,6 +148,8 @@ SimBuilder::BuildPlane(SimBuildOptions const &options) {
     sim->m_SurfaceTensionEnabled = true;
     sim->m_MagneticEnabled = options.EnableMag;
     sim->m_Damping = 8;
+    sim->m_Magnetic.SetTrunc();
+    sim->m_Magnetic.SetEpsFactor(1e-3 / sgrid.GetSpacing());
     Vector3d Hext = Vector3d(0, 6e4, 0);
     if(options.EnableMag){
         sim->m_FieldApplied = [Hext](const Vector3d& pos, double time) -> Vector3d{

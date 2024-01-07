@@ -5,7 +5,7 @@
 void SolveMagneticFMM(const void *positions, const void *normals,
                       const void *areas, const void *Hext, void *pressures,
                       const int size, const int num_iter, const double lambda,
-                      const double chi, const double epsilon);
+                      const double chi, const double epsilon, bool trunc);
 
 void CacheMagneticFMM(const void *positions, const void *normals,
                       const void *areas, const void *Hext, const void *charges,

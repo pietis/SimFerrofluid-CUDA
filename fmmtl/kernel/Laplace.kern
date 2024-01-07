@@ -16,6 +16,7 @@ struct LaplaceKernel
   typedef Vec<4,double>  result_type;
   typedef Vec<4,double>  kernel_value_type;
   double epsilon = 1e-5;
+  double clamp_value = 0;
 
   /** Kernel evaluation
    * K(t,s) =  {1/R, (s-t)/R^3}  if R > 0
@@ -28,7 +29,7 @@ struct LaplaceKernel
     Vec<3,double> dist = s - t;            //   Vector from target to source
     double R2 = norm_2_sq(dist);           //   R^2
     double invR2;                          //   1 / R^2
-    invR2 = (R2 > epsilon)? 1.0 / R2 : 1.0 / epsilon;         //   Exclude self interaction
+    invR2 = (R2 > epsilon)? 1.0 / R2 : clamp_value;         //   Exclude self interaction
     // invR2 = (R2 > epsilon)? 1.0 / R2 : 0.0;         //   Exclude self interaction
     double invR = std::sqrt(invR2);        //   Potential
     dist *= invR2 * invR;                  //   Force

@@ -27,7 +27,7 @@ class Magnetic {
         SolveMagneticFMM(m_Mesh.Positions.data(), m_Mesh.Normals.data(),
                          m_Mesh.Areas.data(), m_Hext.data(),
                          m_MagneticPressure.data(), m_Mesh.size(),
-                         m_NumIteration, m_Lambda, m_Chi, m_Eps);
+                         m_NumIteration, m_Lambda, m_Chi, m_Eps, m_Trunc);
         fmt::print("{:.3f}s ", sw.Stop());
     }
     void
@@ -49,6 +49,8 @@ class Magnetic {
         m_Lambda = (-m_Chi) / (2 + m_Chi);
     }
     void SetIteration(int iter) { m_NumIteration = iter; }
+    void SetEpsFactor(double epsFactor) { m_EpsFactor = epsFactor; }
+    void SetTrunc() { m_Trunc = true; }
     void AssignMesh(SurfaceMesh &mesh) { m_Mesh = mesh; }
 
   private:
@@ -98,5 +100,6 @@ class Magnetic {
     double m_EpsFactor = 1.0;
     double m_Eps;
     double m_StopThres = 1e-6;
+    bool m_Trunc = false;
 };
 } // namespace Pivot
