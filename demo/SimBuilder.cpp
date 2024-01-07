@@ -148,8 +148,6 @@ SimBuilder::BuildPlane(SimBuildOptions const &options) {
     sim->m_SurfaceTensionEnabled = true;
     sim->m_MagneticEnabled = options.EnableMag;
     sim->m_Damping = 8;
-    sim->m_Magnetic.SetTrunc();
-    sim->m_Magnetic.SetEpsFactor(1e-3 / sgrid.GetSpacing());
     Vector3d Hext = Vector3d(0, 6e4, 0);
     if(options.EnableMag){
         sim->m_FieldApplied = [Hext](const Vector3d& pos, double time) -> Vector3d{
@@ -243,7 +241,7 @@ SimBuilder::BuildTmp(SimBuildOptions const &options) {
 
 std::unique_ptr<Simulation>
 SimBuilder::BuildMagSphere(SimBuildOptions const &options) {
-    constexpr double length = .08;
+    constexpr double length = .12;
     constexpr int bw = 2;
     int const scale = options.Scale < 0 ? 64 : options.Scale;
     StaggeredGrid sgrid(2, length / (scale - bw * 2),
@@ -253,7 +251,7 @@ SimBuilder::BuildMagSphere(SimBuildOptions const &options) {
     sim->m_MagneticEnabled = options.EnableMag;
     sim->m_Magnetic.SetChi(0.8);
     sim->m_Damping = 16;
-    Vector3d Hext = Vector3d(0, 2e4, 0);
+    Vector3d Hext = Vector3d(0, 2.5e4, 0);
     if(options.EnableMag){
         sim->m_FieldApplied = [Hext](const Vector3d& pos, double time) -> Vector3d{
             return Hext;
