@@ -173,6 +173,7 @@ void ApplyCacheFMM(const void *sources, const void *targets,
 
     kernel_type K(6);
     K.epsilon = epsilon * epsilon;
+    K.clamp_value = 1.0 / K.epsilon;
     fmmtl::kernel_matrix<kernel_type> A{K, target_points, source_points};
     FMMOptions opts;
     A.set_options(opts);
