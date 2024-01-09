@@ -55,6 +55,7 @@ namespace Pivot {
 			DescribeScene(simulation);
 		} else {
 			LoadFrame(simulation, m_BeginFrame - 1);
+			simulation->CacheMagneticObject();
 		}
 
 		// Initialize timing
