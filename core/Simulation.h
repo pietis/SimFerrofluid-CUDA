@@ -11,7 +11,7 @@ class Simulation {
     friend class SimBuilder;
 
   public:
-    enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak, Plane, Dipole, Pattern, MagSphere, Tmp };
+    enum class Scene { Falling, BigBall, Slope, Droplet, DamBreak, Plane, Dipole, Pattern, Pattern2, MagSphere, Tmp };
 
   public:
     explicit Simulation(StaggeredGrid const &sgrid);
