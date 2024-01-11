@@ -63,7 +63,7 @@ void SolvePotential(const void *positions, const void *normals,
         force = A * charges;
 
         residual = 0;
-#pragma omp parallel for
+#pragma omp parallel for reduction(+ : residual)
         for (int i = 0; i < size; i++) {
             double tmp = b[i] + 2 * lambda / (4 * m_PI) *
                                     (force[i][1] * normals_[i * 3 + 0] +
