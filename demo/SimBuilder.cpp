@@ -306,8 +306,8 @@ SimBuilder::BuildPattern(SimBuildOptions const &options) {
             return Hext0 + (Hext1 - Hext0) * timeFactor;
         };
     }
-    CSG::Union(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.005,
-                                    Vector3d(0, 1, 0), 0.32 * length, 0.005 * length));
+    CSG::Union(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.0075,
+                                    Vector3d(0, 1, 0), 0.32 * length, 0.0075 * length));
     return sim;
 }
 std::unique_ptr<Simulation>
