@@ -33,6 +33,8 @@ class SimBuilder {
     static std::unique_ptr<Simulation>
     BuildPattern2(SimBuildOptions const &options);
     static std::unique_ptr<Simulation>
+    BuildPattern3(SimBuildOptions const &options);
+    static std::unique_ptr<Simulation>
     BuildTmp(SimBuildOptions const &options);
     static std::unique_ptr<Simulation>
     BuildMagSphere(SimBuildOptions const &options);

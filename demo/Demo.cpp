@@ -16,6 +16,7 @@ Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
             {"dipole", Simulation::Scene::Dipole},
             {"pattern", Simulation::Scene::Pattern},
             {"pattern2", Simulation::Scene::Pattern2},
+            {"pattern3", Simulation::Scene::Pattern3},
             {"magsphere", Simulation::Scene::MagSphere},
             {"tmp", Simulation::Scene::Tmp},
         };

@@ -39,6 +39,9 @@ std::unique_ptr<Simulation> SimBuilder::Build(SimBuildOptions const &options) {
     case Simulation::Scene::MagSphere:
         simulation = BuildMagSphere(options);
         break;
+    case Simulation::Scene::Pattern3:
+        simulation = BuildPattern3(options);
+        break;
     case Simulation::Scene::Tmp:
         simulation = BuildTmp(options);
         break;
@@ -334,6 +337,32 @@ SimBuilder::BuildPattern2(SimBuildOptions const &options) {
     }
     CSG::Union(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.012,
                                     Vector3d(0, 1, 0), 0.2 * length, 0.012 * length));
+    return sim;
+}
+std::unique_ptr<Simulation>
+SimBuilder::BuildPattern3(SimBuildOptions const &options) {
+    constexpr double length = .24;
+    constexpr int bw = 2;
+    int const scale = options.Scale < 0 ? 64 : options.Scale;
+    int thickness = ceil(0.02 * scale) + bw * 2 ;
+    StaggeredGrid sgrid(2, length / (scale - bw * 2),
+                        Vector3i(1, 0, 1) * scale + Vector3i(0, thickness, 0));
+    auto sim = std::make_unique<Simulation>(sgrid);
+    sim->m_SurfaceTensionEnabled = true;
+    sim->m_GravityEnabled = false;
+    sim->m_MagneticEnabled = options.EnableMag;
+    sim->m_Damping = 8;
+    sim->m_Magnetic.SetChi(0.8);
+    Vector3d Hext = Vector3d(0, 6e4, 0);
+
+    if(options.EnableMag){
+        sim->m_FieldApplied = [Hext](const Vector3d& pos, double time) -> Vector3d{
+            return Hext;
+        };
+    }
+    CSG::Union(sim->m_LevelSet, ImplicitBox(sgrid.GetDomainOrigin(), Vector3d(1, 1, 1) * length));
+    CSG::Except(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.012,
+                                    Vector3d(0, 1, 0), 0.24 * length, 0.012 * length));
     return sim;
 }
 } // namespace Pivot
