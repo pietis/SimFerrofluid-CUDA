@@ -362,7 +362,7 @@ SimBuilder::BuildPattern3(SimBuildOptions const &options) {
     }
     CSG::Union(sim->m_LevelSet, ImplicitBox(sgrid.GetDomainOrigin(), Vector3d(1, 1, 1) * length));
     CSG::Except(sim->m_LevelSet, ImplicitDisk(sgrid.GetDomainOrigin() + Vector3d(1, 0, 1) * length * 0.5 + Vector3d(0, 1, 0) * length * 0.012,
-                                    Vector3d(0, 1, 0), 0.24 * length, 0.012 * length));
+                                    Vector3d(0, 1, 0), 0.2 * length, 0.012 * length));
     return sim;
 }
 } // namespace Pivot
