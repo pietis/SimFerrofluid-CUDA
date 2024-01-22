@@ -40,5 +40,7 @@ class SimBuilder {
     BuildMagSphere(SimBuildOptions const &options);
     static std::unique_ptr<Simulation>
     BuildLifting(SimBuildOptions const &options);
+    static std::unique_ptr<Simulation>
+    BuildLR(SimBuildOptions const &options);
 };
 } // namespace Pivot
