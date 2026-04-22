@@ -3,6 +3,7 @@
 #include "Collider.h"
 #include "Contour.h"
 #include "Magnetic.h"
+#include "MagneticField.h"
 #include "Pressure.h"
 
 namespace Pivot {
@@ -28,6 +29,7 @@ class Simulation {
     void AdvectFields(double dt);
     void ApplyBodyForces(double dt);
     void CacheMagneticObject();
+    void UpdateMagneticPressure();
     void ProjectVelocity(double dt);
     void ApplySemiImplicitST(double dt);
     void ComputeVolumeError(double dt);
@@ -53,6 +55,8 @@ class Simulation {
     GridData<double> m_LevelSet;
     Contour m_Contour;
     Magnetic m_Magnetic;
+    MagneticField m_MagneticField;
+    std::vector<double> m_MagneticPressures;
     std::shared_ptr<Magnetic> m_MagneticObject;
     std::function<Vector3d(const Vector3d&, double time)> m_FieldApplied;
 

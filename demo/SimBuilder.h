@@ -7,6 +7,7 @@ struct SimBuildOptions {
     Simulation::Scene Scene;
     int Scale;
     bool EnableMag;
+  Magnetic::SolverType MagSolver;
 };
 
 class SimBuilder {

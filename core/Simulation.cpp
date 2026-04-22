@@ -15,7 +15,8 @@ namespace Pivot {
 		m_Pressure(m_SGrid),
 		m_Velocity(m_SGrid.GetFaceGrids()),
 		m_LevelSet(m_SGrid.GetCellGrid(), std::numeric_limits<double>::infinity()),
-		m_Contour(m_SGrid.GetCellGrid()) {
+		m_Contour(m_SGrid.GetCellGrid()),
+		m_MagneticField(m_SGrid, 0.33, m_SGrid.GetSpacing() * 2) {
 	}
 
 	void Simulation::Describe(YAML::Node &root) const {
@@ -106,7 +107,7 @@ namespace Pivot {
 			for (auto const &normal : m_Contour.GetMesh().Normals) {
 				IO::Write(fout, normal.cast<float>().eval());
 			}
-			for (auto const &mag_pressure : m_Magnetic.m_MagneticPressure) {
+			for (auto const &mag_pressure : m_MagneticPressures) {
 				IO::Write(fout, (float)mag_pressure);
 			}
 			IO::Write(fout, static_cast<std::uint32_t>(m_Contour.GetMesh().Indices.size()));
@@ -141,7 +142,7 @@ namespace Pivot {
 		ReinitializeLevelSet(true);
 
 		if(m_MagneticEnabled){
-			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing(), m_MagneticObject);
+			UpdateMagneticPressure();
 		}
 	}
 
@@ -184,14 +185,33 @@ namespace Pivot {
 	}
 
 	void Simulation::CacheMagneticObject(){
-		if(m_MagneticEnabled && (m_MagneticObject != nullptr)){
+		if(m_MagneticEnabled && m_Magnetic.GetSolverType() == Magnetic::SolverType::FMM && (m_MagneticObject != nullptr)){
 			m_MagneticObject->Cache(m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing());
+		}
+	}
+
+	void Simulation::UpdateMagneticPressure() {
+		if (m_Magnetic.GetSolverType() == Magnetic::SolverType::FDM) {
+			m_MagneticField.SetSusceptibility(m_Magnetic.GetChi());
+			m_MagneticField.SetBandWidth(m_LevelSet.GetGrid().GetSpacing() * 2.0);
+
+			SGridData<double> externalField(m_SGrid.GetFaceGrids());
+			ParallelForEach(externalField.GetGrids(), [&](int axis, Vector3i const &face) {
+				Vector3d const pos = externalField[axis].GetGrid().PositionOf(face);
+				externalField[axis][face] = m_FieldApplied(pos, GetTime())[axis];
+			});
+
+			m_MagneticField.Solve(m_LevelSet, externalField);
+			m_MagneticPressures = m_MagneticField.CalculateVertexPressures(m_Contour.GetMesh());
+		} else {
+			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing(), m_MagneticObject);
+			m_MagneticPressures = m_Magnetic.m_MagneticPressure;
 		}
 	}
 
 	void Simulation::ProjectVelocity(double dt) {
 		if(m_MagneticEnabled){
-			m_Magnetic.Solve(m_Contour.GetMesh(), m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing(), m_MagneticObject);
+			UpdateMagneticPressure();
 		}
 		m_Pressure.SetPressureJump([&](int axis, Vector3i const &face, double theta)->double {
 			double pressure = 0;
@@ -207,7 +227,7 @@ namespace Pivot {
 				int index =
 					m_Contour.VertexIndexOf(axis, face - Vector3i::Unit(axis));
 				if(index >= 0){
-					pressure -= m_Magnetic.m_MagneticPressure[index] /
+					pressure -= m_MagneticPressures[index] /
 								m_LiquidDensity * m_SGrid.GetInvSpacing() * dt;
 				}
 			}

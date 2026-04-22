@@ -53,6 +53,7 @@ std::unique_ptr<Simulation> SimBuilder::Build(SimBuildOptions const &options) {
         break;
     }
     simulation->m_Scene = options.Scene;
+    simulation->m_Magnetic.SetSolverType(options.MagSolver);
     return simulation;
 }
 
@@ -340,17 +341,19 @@ SimBuilder::BuildMagSphere(SimBuildOptions const &options) {
             return Hext;
         };
 
-        GridData<double> tmpLevelSet(sgrid.GetCellGrid(), std::numeric_limits<double>::infinity());
-        CSG::Union(tmpLevelSet, ImplicitSphere((0.2 * length + sgrid.GetDomainOrigin()(1)) * Vector3d::Unit(1), length * .3));
-        CSG::Except(tmpLevelSet, ImplicitPlane(sgrid.GetDomainOrigin()(1)*Vector3d::Unit(1), Vector3d::Unit(1)));
-        FastMarching::Solve(tmpLevelSet, -1);
-        Contour contour(sgrid.GetCellGrid());
-        contour.Generate(tmpLevelSet);
-        contour.ComputeVertexInfosFromLS(tmpLevelSet);
-        sim->m_MagneticObject = std::make_shared<Magnetic>();
-        sim->m_MagneticObject->SetChi(5000);
-        sim->m_MagneticObject->SetIteration(100);
-        sim->m_MagneticObject->AssignMesh(contour.GetMesh());
+        if (options.MagSolver == Magnetic::SolverType::FMM) {
+            GridData<double> tmpLevelSet(sgrid.GetCellGrid(), std::numeric_limits<double>::infinity());
+            CSG::Union(tmpLevelSet, ImplicitSphere((0.2 * length + sgrid.GetDomainOrigin()(1)) * Vector3d::Unit(1), length * .3));
+            CSG::Except(tmpLevelSet, ImplicitPlane(sgrid.GetDomainOrigin()(1)*Vector3d::Unit(1), Vector3d::Unit(1)));
+            FastMarching::Solve(tmpLevelSet, -1);
+            Contour contour(sgrid.GetCellGrid());
+            contour.Generate(tmpLevelSet);
+            contour.ComputeVertexInfosFromLS(tmpLevelSet);
+            sim->m_MagneticObject = std::make_shared<Magnetic>();
+            sim->m_MagneticObject->SetChi(5000);
+            sim->m_MagneticObject->SetIteration(100);
+            sim->m_MagneticObject->AssignMesh(contour.GetMesh());
+        }
     }
     
     CSG::Union(sim->m_Collider.LevelSet, ImplicitSphere((0.2 * length + sgrid.GetDomainOrigin()(1)) * Vector3d::Unit(1), length * .3));

@@ -10,7 +10,7 @@ namespace Pivot {
 		virtual Vector3d ClosestNormalOf (Vector3d const &pos) const override { return Vector3d::Zero(); } // FIXME
 		virtual double   SignedDistanceTo(Vector3d const &pos) const override { return 0; } // FIXME
 
-		int size() { return Positions.size(); }
+		int size() const { return Positions.size(); }
 
 		void Clear();
 		void Export(std::ostream &out) const;

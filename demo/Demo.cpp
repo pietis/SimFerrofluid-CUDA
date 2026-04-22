@@ -31,6 +31,21 @@ Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
     }
 }
 
+Pivot::Magnetic::SolverType ParseMagSolverName(std::string_view name) {
+    using SolverType = Pivot::Magnetic::SolverType;
+    static std::unordered_map<std::string, SolverType> const s_SolverFromName = {
+        {"fmm", SolverType::FMM},
+        {"fdm", SolverType::FDM},
+    };
+    if (auto iter = s_SolverFromName.find(name.data());
+        iter != s_SolverFromName.end()) {
+        return iter->second;
+    }
+
+    spdlog::critical("Failed to parse magnetic solver name");
+    std::exit(EXIT_FAILURE);
+}
+
 auto ParseArgs(int argc, char **argv) {
     try {
         cxxopts::Options argParser(
@@ -48,6 +63,8 @@ auto ParseArgs(int argc, char **argv) {
             "c,cfl", "Courant number",
             cxxopts::value<double>()->default_value("1"))(
             "m,mag", "Enable magnetic")(
+            "mag-solver", "Magnetic solver backend (fmm|fdm)",
+            cxxopts::value<std::string>()->default_value("fmm"))(
             "d,stride", "Saving stride",
             cxxopts::value<std::uint32_t>()->default_value("50"))("h,help",
                                                           "Print usage");
@@ -68,6 +85,8 @@ auto ParseArgs(int argc, char **argv) {
             .Scene = ParseSceneName(result["test"].as<std::string>()),
             .Scale = result["scale"].as<int>(),
             .EnableMag = result["mag"].as<bool>(),
+            .MagSolver =
+                ParseMagSolverName(result["mag-solver"].as<std::string>()),
         };
         return std::pair(driverOpt, simOpt);
     } catch (cxxopts::exceptions::exception const &e) {

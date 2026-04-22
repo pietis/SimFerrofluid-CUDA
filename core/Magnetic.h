@@ -13,6 +13,11 @@ class Magnetic {
     friend class Simulation;
 
   public:
+    enum class SolverType {
+        FMM,
+        FDM,
+    };
+
     void
     Solve(SurfaceMesh &mesh,
           const std::function<Vector3d(const Vector3d &, double)> &fieldApplied,
@@ -25,9 +30,9 @@ class Magnetic {
         auto sw = StopWatch("mag.");
         InitSolver(fieldApplied, time, magneticObject);
         SolveMagneticFMM(m_Mesh.Positions.data(), m_Mesh.Normals.data(),
-                         m_Mesh.Areas.data(), m_Hext.data(),
-                         m_MagneticPressure.data(), m_Mesh.size(),
-                         m_NumIteration, m_Lambda, m_Chi, m_Eps, m_Trunc);
+                 m_Mesh.Areas.data(), m_Hext.data(),
+                 m_MagneticPressure.data(), m_Mesh.size(),
+                 m_NumIteration, m_Lambda, m_Chi, m_Eps, m_Trunc);
         fmt::print("{:.3f}s ", sw.Stop());
     }
     void
@@ -52,6 +57,9 @@ class Magnetic {
     void SetEpsFactor(double epsFactor) { m_EpsFactor = epsFactor; }
     void SetTrunc() { m_Trunc = true; }
     void AssignMesh(SurfaceMesh &mesh) { m_Mesh = mesh; }
+    void SetSolverType(SolverType solverType) { m_SolverType = solverType; }
+    SolverType GetSolverType() const { return m_SolverType; }
+    double GetChi() const { return m_Chi; }
 
   private:
     void InitSolver(
@@ -101,5 +109,6 @@ class Magnetic {
     double m_Eps;
     double m_StopThres = 1e-6;
     bool m_Trunc = false;
+    SolverType m_SolverType = SolverType::FMM;
 };
 } // namespace Pivot
