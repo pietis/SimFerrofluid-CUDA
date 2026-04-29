@@ -9,21 +9,6 @@ namespace Pivot {
 std::unique_ptr<Simulation> SimBuilder::Build(SimBuildOptions const &options) {
     std::unique_ptr<Simulation> simulation;
     switch (options.Scene) {
-    case Simulation::Scene::Falling:
-        simulation = BuildFalling(options);
-        break;
-    case Simulation::Scene::BigBall:
-        simulation = BuildBigBall(options);
-        break;
-    case Simulation::Scene::Slope:
-        simulation = BuildSlope(options);
-        break;
-    case Simulation::Scene::Droplet:
-        simulation = BuildDroplet(options);
-        break;
-    case Simulation::Scene::DamBreak:
-        simulation = BuildDambreak(options);
-        break;
     case Simulation::Scene::Plane:
         simulation = BuildPlane(options);
         break;
