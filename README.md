@@ -1,5 +1,7 @@
 # SimFerrofluid
 
+<img src="assets/teaser_sig24magnetic.jpg" width="49%"> <img src="assets/teaser_sig20magnetic.jpg" width="49%">
+
 Research code for 3D grid-based ferrofluid simulation and visualization.
 
 ## Solver Backends
