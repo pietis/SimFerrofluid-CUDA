@@ -46,7 +46,29 @@ If you already cloned the repository without submodules, run:
 git submodule update --init --recursive
 ```
 
-## Toolchain Notes For Windows
+## Build
+
+### Compile
+
+Configure the build mode with `xmake f -m <mode>` before building. The two common modes are:
+
+- `release` — enables optimization, no debug symbols (default)
+- `debug` — disables optimization, includes debug symbols
+
+```bash
+xmake f -m release
+xmake f -m debug
+```
+
+Then build from the repository root:
+
+```bash
+xmake
+```
+
+This builds both the simulation executable and the viewer target.
+
+### Toolchain Notes For Windows
 
 As of April 29, 2026, the Boost package used by this project does not install correctly with a plain Visual Studio 2026 toolchain in xmake.
 
@@ -69,34 +91,52 @@ xmake f --vs=2026 --vs_toolset=14.39.33519 -m release
 
 Notes:
 
-- `14.39.33519` is a full MSVC toolset version from the VS2022 toolchain family.
+- `14.39.33519` is a full MSVC toolset version from the VS2022 toolchain family. You can find installed toolset versions by looking at subdirectory names under `C:\Program Files\Microsoft Visual Studio\<vs_version>\Community\VC\Tools\MSVC\`.
 - Replace it with the exact full version you actually installed if you are using a different older toolset.
 - In current xmake documentation and source, the official option name is `--vs_toolset`.
 - If you see `vc_toolset` mentioned in older notes or local scripts, use the same full version number, but prefer the official `--vs_toolset` spelling for xmake itself.
 
-## Build
+### VSCode IntelliSense
 
-After configuring the toolchain, build the project from the repository root:
+To enable code completion and IntelliSense in VSCode, first generate `.vscode/c_cpp_properties.json` via `Ctrl+Shift+P` → `C/C++: Edit Configurations (UI)`.
+
+Then generate `compile_commands.json` with:
 
 ```bash
-xmake
+xmake project -k compile_commands
 ```
 
-This builds both the simulation executable and the viewer target.
+Finally, add `"compileCommands": "compile_commands.json"` to `.vscode/c_cpp_properties.json` after `"intelliSenseMode"`:
+
+```json
+"intelliSenseMode": "windows-msvc-x64",
+"compileCommands": "compile_commands.json"
+```
 
 ## Quick Start
 
 Two example runs for the same scene with different magnetic solvers:
 
 ```bash
-xmake r demo -t plane -e 401 -r 500 --mag-solver=fdm -m -s 192 -c .5
+xmake r demo -t plane -e 401 -r 500 --mag-solver=fdm -s 192 -c .5
 ```
 
 ```bash
-xmake r demo -t plane -e 401 -r 500 --mag-solver=iob -m -s 192 -c .5
+xmake r demo -t plane -e 401 -r 500 --mag-solver=iob -s 192 -c .5
 ```
 
 By default, the demo writes outputs to the `output` directory.
+
+Other demo cases with IoB solver:
+
+```bash
+xmake r demo -t dipole -e 401 -r 500 -d 40 -s 256 -c 0.5
+xmake r demo -t magsphere -e 281 -r 500 -d 40 -s 192
+xmake r demo -t lifting -e 651 -r 500 -d 50 -s 320
+xmake r demo -t pattern -e 401 -r 4000 -d 100 -s 768
+xmake r demo -t pattern2 -e 401 -r 4000 -d 100 -s 1024
+xmake r demo -t pattern3 -e 601 -r 2000 -d 100 -s 768
+```
 
 ## Visualization
 
