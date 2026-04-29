@@ -13,9 +13,7 @@ Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
             {"pattern2", Simulation::Scene::Pattern2},
             {"pattern3", Simulation::Scene::Pattern3},
             {"lifting", Simulation::Scene::Lifting},
-            {"lr", Simulation::Scene::LR},
             {"magsphere", Simulation::Scene::MagSphere},
-            {"tmp", Simulation::Scene::Tmp},
         };
     if (auto iter = s_SceneFromName.find(name.data());
         iter != s_SceneFromName.end()) {
@@ -57,7 +55,8 @@ auto ParseArgs(int argc, char **argv) {
             "r,rate", "Frame rate", cxxopts::value<double>())(
             "c,cfl", "Courant number",
             cxxopts::value<double>()->default_value("1"))(
-            "m,mag", "Enable magnetic")(
+            "m,mag", "Enable magnetic",
+            cxxopts::value<bool>()->default_value("true"))(
             "mag-solver", "Magnetic solver backend (iob|fdm)",
             cxxopts::value<std::string>()->default_value("iob"))(
             "d,stride", "Saving stride",
