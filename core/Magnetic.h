@@ -14,7 +14,7 @@ class Magnetic {
 
   public:
     enum class SolverType {
-        FMM,
+        IoB,
         FDM,
     };
 
@@ -109,6 +109,6 @@ class Magnetic {
     double m_Eps;
     double m_StopThres = 1e-6;
     bool m_Trunc = false;
-    SolverType m_SolverType = SolverType::FMM;
+    SolverType m_SolverType = SolverType::IoB;
 };
 } // namespace Pivot

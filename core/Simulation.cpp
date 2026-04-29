@@ -185,7 +185,7 @@ namespace Pivot {
 	}
 
 	void Simulation::CacheMagneticObject(){
-		if(m_MagneticEnabled && m_Magnetic.GetSolverType() == Magnetic::SolverType::FMM && (m_MagneticObject != nullptr)){
+		if(m_MagneticEnabled && m_Magnetic.GetSolverType() == Magnetic::SolverType::IoB && (m_MagneticObject != nullptr)){
 			m_MagneticObject->Cache(m_FieldApplied, GetTime(), m_LevelSet.GetGrid().GetSpacing());
 		}
 	}

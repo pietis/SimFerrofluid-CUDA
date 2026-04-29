@@ -269,7 +269,7 @@ struct SphericalMultipole3D {
    *
    * These are not the spherical harmonics, but are the spherical
    * harmonics with the prefactor (often denoted A_n^m) included. These are useful
-   * for computing multipole and local expansions in an FMM.
+   * for computing multipole and local expansions in an IoB.
    */
   inline static
   void evalZ(real_type rho, real_type theta, real_type phi, int P,
@@ -357,7 +357,7 @@ struct SphericalMultipole3D {
    *
    * These are not the spherical harmonics, but are the spherical
    * harmonics with the prefactor (often denoted A_n^m) included. These are useful
-   * for computing multipole and local expansions in an FMM.
+   * for computing multipole and local expansions in an IoB.
    */
   inline static
   void evalW(real_type rho, real_type theta, real_type phi, int P,

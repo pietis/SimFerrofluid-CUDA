@@ -1,6 +1,6 @@
 #pragma once
 /**
- * Storage class for all FMM options
+ * Storage class for all IoB options
  */
 
 #include <iostream>
@@ -8,7 +8,7 @@
 #include <cmath>
 #include "fmmtl/config.hpp"
 
-///** Class to define compile-time and run-time FMM options */
+///** Class to define compile-time and run-time IoB options */
 //class FMMOptions {
 //  struct DefaultMAC {
 //    double theta_sq_;
@@ -34,14 +34,14 @@
 //
 //  // OTHER
 //  //! Evaluation type
-//  enum EvalType {FMM, TREECODE};
+//  enum EvalType {IoB, TREECODE};
 //  EvalType evaluator;
 //
 //  FMMOptions()
 //      : ncrit(128),
 //        theta(0.5),
 //        print_tree(false),
-//        evaluator(FMM) {
+//        evaluator(IoB) {
 //  };
 //
 //  // TODO: Generalize type/construction
@@ -50,7 +50,7 @@
 //  }
 //};
 
-/** Class to define compile-time and run-time FMM options */
+/** Class to define compile-time and run-time IoB options */
 class FMMOptions {
   struct FarfieldMAC {
     double theta_sq_;
@@ -87,14 +87,14 @@ public:
   bool extra_condition;
   // OTHER
   //! Evaluation type
-  enum EvalType { FMM, TREECODE };
+  enum EvalType { IoB, TREECODE };
   EvalType evaluator;
 
   FMMOptions(double _h = 0.1, bool _extra_condition = 0)
     : ncrit(128),
     theta(0.5),
     print_tree(false),
-    evaluator(FMM),
+    evaluator(IoB),
     m_h(_h),
     extra_condition(_extra_condition) {
   };

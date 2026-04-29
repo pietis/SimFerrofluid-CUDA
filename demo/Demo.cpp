@@ -7,11 +7,6 @@ Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
     using namespace Pivot;
     static std::unordered_map<std::string, Simulation::Scene> const
         s_SceneFromName = {
-            {"falling", Simulation::Scene::Falling},
-            {"bigball", Simulation::Scene::BigBall},
-            {"slope", Simulation::Scene::Slope},
-            {"droplet", Simulation::Scene::Droplet},
-            {"dambreak", Simulation::Scene::DamBreak},
             {"plane", Simulation::Scene::Plane},
             {"dipole", Simulation::Scene::Dipole},
             {"pattern", Simulation::Scene::Pattern},
@@ -34,7 +29,7 @@ Pivot::Simulation::Scene ParseSceneName(std::string_view name) {
 Pivot::Magnetic::SolverType ParseMagSolverName(std::string_view name) {
     using SolverType = Pivot::Magnetic::SolverType;
     static std::unordered_map<std::string, SolverType> const s_SolverFromName = {
-        {"fmm", SolverType::FMM},
+        {"iob", SolverType::IoB},
         {"fdm", SolverType::FDM},
     };
     if (auto iter = s_SolverFromName.find(name.data());
@@ -42,7 +37,7 @@ Pivot::Magnetic::SolverType ParseMagSolverName(std::string_view name) {
         return iter->second;
     }
 
-    spdlog::critical("Failed to parse magnetic solver name");
+    spdlog::critical("Failed to parse magnetic solver name, expected iob or fdm");
     std::exit(EXIT_FAILURE);
 }
 
@@ -63,8 +58,8 @@ auto ParseArgs(int argc, char **argv) {
             "c,cfl", "Courant number",
             cxxopts::value<double>()->default_value("1"))(
             "m,mag", "Enable magnetic")(
-            "mag-solver", "Magnetic solver backend (fmm|fdm)",
-            cxxopts::value<std::string>()->default_value("fmm"))(
+            "mag-solver", "Magnetic solver backend (iob|fdm)",
+            cxxopts::value<std::string>()->default_value("iob"))(
             "d,stride", "Saving stride",
             cxxopts::value<std::uint32_t>()->default_value("50"))("h,help",
                                                           "Print usage");
