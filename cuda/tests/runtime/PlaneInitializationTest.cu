@@ -2,6 +2,7 @@
 #include "core/runtime/CudaContext.h"
 #include "core/runtime/DeviceBuffer.h"
 #include "core/scene/PlaneScene.cuh"
+#include "core/sim/Simulation.h"
 
 #include <bit>
 #include <cmath>
@@ -247,10 +248,25 @@ void TestDeviceBufferMoveZeroAndOverflow() {
     });
 }
 
+void TestProductionSimulationBootstrapState() {
+    const Pivot::Cuda::Simulation simulation(Pivot::Cuda::MakePlaneScene(16));
+    const Pivot::Cuda::SimulationStateMetadata metadata = simulation.state_metadata();
+    CHECK(Bits(metadata.time) == 0U);
+    CHECK(metadata.cell_phi_count == 3072U);
+    CHECK(metadata.velocity_counts[0] == 3264U);
+    CHECK(metadata.velocity_counts[1] == 3328U);
+    CHECK(metadata.velocity_counts[2] == 3264U);
+    CHECK(simulation.state().phi.size() == metadata.cell_phi_count);
+    CHECK(simulation.state().velocity[0].size() == metadata.velocity_counts[0]);
+    CHECK(simulation.state().velocity[1].size() == metadata.velocity_counts[1]);
+    CHECK(simulation.state().velocity[2].size() == metadata.velocity_counts[2]);
+}
+
 }  // namespace
 
 int main() {
     TestPlaneInitializationAtScale16();
     TestDeviceBufferMoveZeroAndOverflow();
+    TestProductionSimulationBootstrapState();
     return 0;
 }
