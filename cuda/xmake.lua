@@ -1,0 +1,8 @@
+target("cuda_host_tests")
+    set_default(false)
+    set_kind("binary")
+    set_languages("cxx20")
+    add_includedirs(".", { public = true })
+    add_includedirs("core/grid", "core/scene")
+    add_files("core/scene/PlaneScene.cpp")
+    add_files("tests/host/PlaneSceneContractTest.cpp")

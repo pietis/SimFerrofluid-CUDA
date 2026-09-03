@@ -4,6 +4,7 @@ set_languages("cxxlatest")
 add_rules("mode.debug", "mode.release")
 
 includes("SimViewer")
+includes("cuda")
 
 add_requires("amgcl")
 add_requires("cxxopts v3.1.1")
