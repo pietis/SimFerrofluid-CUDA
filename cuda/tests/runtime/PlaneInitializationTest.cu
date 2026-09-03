@@ -18,6 +18,8 @@
 
 namespace {
 
+constexpr unsigned int kFieldViewThreadsPerBlock = 64U;
+
 [[noreturn]] void Fail(const char* expression, const int line) {
     std::fprintf(stderr, "PlaneInitializationTest:%d check failed: %s\n", line, expression);
     std::abort();
@@ -61,6 +63,44 @@ void FillWithSentinel(Pivot::Cuda::DeviceBuffer<double>& buffer,
                                      context.stream()));
 }
 
+__global__ void WriteCoordinateSensitiveFieldViewValues(Pivot::Cuda::FieldView<int> field) {
+    const std::size_t index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (index >= field.VertexCount()) {
+        return;
+    }
+
+    const Pivot::Cuda::Int3 coord = field.CoordOf(index);
+    field.data[field.IndexOf(coord)] = 100 * coord.x + 10 * coord.y + coord.z;
+}
+
+void TestDeviceFieldViewZFastRoundTrip(const Pivot::Cuda::CudaContext& context) {
+    const Pivot::Cuda::GridDesc grid{
+        0.25,
+        4.0,
+        {2, 3, 5},
+        {-1.0, 2.0, 3.0},
+    };
+    const std::size_t count = grid.VertexCount();
+    CHECK(count == 30U);
+    Pivot::Cuda::DeviceBuffer<int> values(count, context.stream());
+    const unsigned int block_count = static_cast<unsigned int>(
+        (count + static_cast<std::size_t>(kFieldViewThreadsPerBlock) - 1U) /
+        kFieldViewThreadsPerBlock);
+    WriteCoordinateSensitiveFieldViewValues<<<block_count, kFieldViewThreadsPerBlock, 0U,
+                                               context.stream()>>>({values.data(), grid});
+    PIVOT_CUDA_CHECK(cudaGetLastError());
+    context.Synchronize();
+
+    std::vector<int> snapshot(count);
+    PIVOT_CUDA_CHECK(cudaMemcpyAsync(snapshot.data(), values.data(), count * sizeof(int),
+                                     cudaMemcpyDeviceToHost, context.stream()));
+    context.Synchronize();
+    for (std::size_t index = 0; index < count; ++index) {
+        const Pivot::Cuda::Int3 coord = grid.CoordOf(index);
+        CHECK(snapshot[index] == 100 * coord.x + 10 * coord.y + coord.z);
+    }
+}
+
 void TestPlaneInitializationAtScale16() {
     static_assert(!std::is_copy_constructible_v<Pivot::Cuda::CudaContext>);
     static_assert(!std::is_copy_assignable_v<Pivot::Cuda::CudaContext>);
@@ -81,9 +121,13 @@ void TestPlaneInitializationAtScale16() {
     CHECK(context.stream() != nullptr);
     CHECK(context.memory_pool() != nullptr);
     CHECK(context.device_ordinal() == 0);
+    unsigned int stream_flags = 0U;
+    PIVOT_CUDA_CHECK(cudaStreamGetFlags(context.stream(), &stream_flags));
+    CHECK((stream_flags & cudaStreamNonBlocking) != 0U);
     int active_device = -1;
     PIVOT_CUDA_CHECK(cudaGetDevice(&active_device));
     CHECK(active_device == context.device_ordinal());
+    TestDeviceFieldViewZFastRoundTrip(context);
 
     const std::size_t cell_count = scene.cell_grid.VertexCount();
     const std::size_t face_count_x = scene.face_grids[0].VertexCount();

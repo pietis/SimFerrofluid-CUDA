@@ -1,4 +1,4 @@
-option("cuda")
+option("cuda_backend")
     set_default(false)
     set_showmenu(true)
     set_description("Build the CUDA runtime bootstrap targets (CUDA 12.8+ required).")
@@ -14,12 +14,15 @@ target("cuda_host_tests")
     add_files("core/scene/PlaneScene.cpp")
     add_files("tests/host/PlaneSceneContractTest.cpp")
 
-if has_config("cuda") then
+if has_config("cuda_backend") then
+    local cuda_sdk_root = get_config("cuda")
+
     target("sim_cuda")
         set_default(false)
         set_kind("static")
         set_languages("cxx20")
         add_includedirs(".", { public = true })
+        add_linkdirs(path.join(cuda_sdk_root, "lib64"), { public = true })
         add_links("cudart", { public = true })
         add_cugencodes("sm_80", "sm_89", "sm_120", "compute_120")
         add_cuflags("--fmad=false")
@@ -33,5 +36,6 @@ if has_config("cuda") then
         set_languages("cxx20")
         add_deps("sim_cuda")
         add_includedirs(".")
+        add_cugencodes("sm_80", "sm_89", "sm_120", "compute_120")
         add_files("tests/runtime/PlaneInitializationTest.cu")
 end
