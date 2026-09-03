@@ -423,4 +423,3 @@ git status --short
 
 Review every diff, report pass/fail/skip counts and exit codes, list unverified
 items and all numerical deviations, and request code review before merging.
-

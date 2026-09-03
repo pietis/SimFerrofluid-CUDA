@@ -251,4 +251,3 @@ from compile-only CI.
 | Released pressure matrix | `cuda/core/pressure/PressureAssembly.cu` | exact target | solver/preconditioner differs | CSR/RHS equality, residual/divergence |
 | Released IoB, P=6 FMM | `cuda/core/magnetic/*` | equivalent target | parallel FMM ordering | direct/operator/iteration parity |
 | CPU implementation remains available | existing `demo` on `main`; distinct `demo_cuda` | exact | CPU baseline build incompatibility remains documented | source/link audit and CI matrices |
-
