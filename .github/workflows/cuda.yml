@@ -1,0 +1,58 @@
+name: CUDA bootstrap
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_gpu:
+        description: Run runtime and Compute Sanitizer checks on the self-hosted NVIDIA runner
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  cuda-compile-only:
+    name: CUDA compile-only (no GPU)
+    runs-on: ubuntu-latest
+    container: nvidia/cuda:12.8.0-devel-ubuntu24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xmake-io/github-action-setup-xmake@v1
+      - name: Configure standalone CUDA bootstrap
+        run: XMAKE_ROOT=y xmake f -F cuda/xmake.lua -m release --cuda_backend=y --cuda=/usr/local/cuda
+      - name: Compile and link only
+        run: |
+          XMAKE_ROOT=y xmake build -F cuda/xmake.lua demo_cuda
+          XMAKE_ROOT=y xmake build -F cuda/xmake.lua cuda_runtime_tests
+
+  cuda-runtime-nvidia:
+    name: CUDA runtime and sanitizer (manual NVIDIA runner)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_gpu == true
+    runs-on: [self-hosted, linux, x64, nvidia-gpu]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xmake-io/github-action-setup-xmake@v1
+      - name: Run host contracts
+        run: |
+          xmake f -F cuda/xmake.lua -m debug
+          xmake build -F cuda/xmake.lua cuda_host_tests
+          xmake build -F cuda/xmake.lua cuda_cli_host_tests
+          xmake build -F cuda/xmake.lua cuda_source_boundary_tests
+          xmake run -F cuda/xmake.lua cuda_host_tests
+          xmake run -F cuda/xmake.lua cuda_cli_host_tests
+          xmake run -F cuda/xmake.lua cuda_source_boundary_tests
+      - name: Configure CUDA runtime targets
+        run: xmake f -F cuda/xmake.lua -m debug --cuda_backend=y --cuda=/usr/local/cuda
+      - name: Run CUDA contracts and valid dry run
+        run: |
+          xmake build -F cuda/xmake.lua demo_cuda
+          xmake build -F cuda/xmake.lua cuda_runtime_tests
+          xmake run -F cuda/xmake.lua cuda_runtime_tests
+          xmake run -F cuda/xmake.lua demo_cuda -- --test plane --scale 16 --end 1 --rate 500 --cfl .5 --mag=false --dry-run
+      - name: Reject unsupported CLI requests
+        run: |
+          if xmake run -F cuda/xmake.lua demo_cuda -- --test dipole --end 1 --rate 500 --cfl .5 --mag=false --dry-run; then exit 1; fi
+          if xmake run -F cuda/xmake.lua demo_cuda -- --test plane --end 1 --rate 500 --cfl .5 --mag=false; then exit 1; fi
+      - name: Run Compute Sanitizer
+        run: compute-sanitizer --tool memcheck build/linux/x86_64/debug/cuda_runtime_tests
