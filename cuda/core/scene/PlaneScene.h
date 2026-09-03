@@ -4,6 +4,8 @@
 
 namespace Pivot::Cuda {
 
+inline constexpr char kCudaBootstrapStatus[] = "CUDA bootstrap only - NOT A FLUID SOLVER";
+
 struct PlaneScene {
     int scale;
     int boundary_width;
