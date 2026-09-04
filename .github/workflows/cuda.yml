@@ -21,6 +21,11 @@ jobs:
     container: nvidia/cuda:12.8.0-devel-ubuntu24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install container prerequisites for xmake setup
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            git ca-certificates curl unzip make
       - uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a # v1
       - name: Configure standalone CUDA bootstrap
         run: XMAKE_ROOT=y xmake f -c -F cuda/xmake.lua -m release --cuda_backend=y --cuda=/usr/local/cuda
